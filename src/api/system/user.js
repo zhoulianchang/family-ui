@@ -9,6 +9,14 @@ export function listUser(query) {
         params: query
     })
 }
+// 查询用户下拉框
+export function selectUser(query) {
+    return request({
+        url: '/system/user/select',
+        method: 'get',
+        params: query
+    })
+}
 
 // 查询用户详细
 export function getUser(userId) {

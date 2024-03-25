@@ -1,34 +1,45 @@
 <template>
     <div class="app-container">
         <el-form :model="queryParams" ref="queryRef" :inline="true" v-show="showSearch">
-            <el-form-item label="课程名称" prop="nameLike">
-                <el-input
-                        v-model="queryParams.nameLike"
-                        placeholder="请输入课程名称"
-                        clearable
-                        style="width: 200px"
-                        @keyup.enter="handleQuery"
-                />
-            </el-form-item>
-            <el-form-item label="课程类型" prop="type">
-                <el-select v-model="queryParams.type" placeholder="请选择课程类型" clearable style="width: 200px">
+            <el-form-item label="消费用户" prop="userName">
+                <el-select v-model="queryParams.userName" placeholder="请选择消费用户" clearable>
                     <el-option
-                            v-for="dict in course_type"
-                            :key="dict.value"
-                            :label="dict.label"
-                            :value="dict.value"
+                            v-for="dict in userSelect"
+                            :key="dict.id"
+                            :label="dict.name"
+                            :value="dict.name"
                     />
                 </el-select>
             </el-form-item>
-            <el-form-item label="课程适用人群" prop="applyTo">
-                <el-select v-model="queryParams.applyTo" placeholder="请选择课程适用人群" clearable style="width: 200px">
+            <el-form-item label="分类" prop="type">
+                <el-select v-model="queryParams.type" placeholder="请选择账单分类" clearable>
                     <el-option
-                            v-for="dict in course_apply_to"
+                            v-for="dict in bill_type"
                             :key="dict.value"
                             :label="dict.label"
-                            :value="dict.value"
+                            :value="parseInt(dict.value)"
                     />
                 </el-select>
+            </el-form-item>
+            <el-form-item label="资金流向" prop="flow">
+                <el-select v-model="queryParams.flow" placeholder="请选择资金流向" clearable>
+                    <el-option
+                            v-for="dict in bill_flow"
+                            :key="dict.value"
+                            :label="dict.label"
+                            :value="parseInt(dict.value)"
+                    />
+                </el-select>
+            </el-form-item>
+            <el-form-item label="消费日期" style="width: 308px">
+                <el-date-picker
+                        v-model="dateRange"
+                        value-format="YYYY-MM-DD"
+                        type="daterange"
+                        range-separator="-"
+                        start-placeholder="开始日期"
+                        end-placeholder="结束日期"
+                ></el-date-picker>
             </el-form-item>
             <el-form-item>
                 <el-button type="primary" icon="Search" @click="handleQuery">搜索</el-button>
@@ -85,9 +96,9 @@
         <el-table v-loading="loading" :data="billList" @selection-change="handleSelectionChange">
             <el-table-column type="selection" width="55" align="center"/>
             <el-table-column label="消费用户" align="center" prop="userName" :show-overflow-tooltip="true" width="120"/>
-            <el-table-column label="消费时间" align="center" prop="payTime" width="200">
+            <el-table-column label="消费日期" align="center" prop="payTime" width="200">
                 <template #default="scope">
-                    <span>{{ parseTime(scope.row.payTime) }}</span>
+                    <span>{{ parseTime(scope.row.payTime, '{y}-{m}-{d}') }}</span>
                 </template>
             </el-table-column>
             <el-table-column label="消费金额" align="center" prop="amount" :show-overflow-tooltip="true" width="100"/>
@@ -124,36 +135,52 @@
 
         <!-- 添加或修改课程对话框 -->
         <el-dialog :title="title" v-model="open" width="500px" append-to-body>
-            <el-form ref="courseRef" :model="form" :rules="rules" label-width="110px">
-                <el-form-item label="课程名称" prop="name">
-                    <el-input v-model="form.name" placeholder="请输入课程名称"/>
-                </el-form-item>
-                <el-form-item label="课程类型" prop="type">
-                    <el-radio-group v-model="form.type">
-                        <el-radio
-                                v-for="dict in course_type"
-                                :key="dict.value"
-                                :label="parseInt(dict.value)"
-                        >{{ dict.label }}
-                        </el-radio>
-                    </el-radio-group>
-                </el-form-item>
-                <el-form-item label="课程适用人群" prop="applyTo">
-                    <el-select v-model="form.applyTo" placeholder="请选择课程适用人群" clearable>
+            <el-form ref="billRef" :model="form" :rules="rules" label-width="110px">
+                <el-form-item label="消费用户" prop="userName">
+                    <el-select v-model="form.userName" placeholder="请选择消费用户" clearable>
                         <el-option
-                                v-for="dict in course_apply_to"
+                                v-for="dict in userSelect"
+                                :key="dict.id"
+                                :label="dict.name"
+                                :value="dict.name"
+                        />
+                    </el-select>
+                </el-form-item>
+                <el-form-item label="消费日期" prop="payTime">
+                    <el-date-picker
+                            v-model="form.payTime"
+                            value-format="YYYY-MM-DD"
+                            type="date"
+                            placeholder="请选择一个消费日期"
+                            :shortcuts="shortcuts"
+                    />
+                </el-form-item>
+                <el-form-item label="消费金额" prop="amount">
+                    <el-input-number style="margin-right: 10px" v-model="form.amount" :precision="2" :step="1"
+                                     :min="0.1"/>
+                    元
+                </el-form-item>
+                <el-form-item label="分类" prop="type">
+                    <el-select v-model="form.type" placeholder="请选择账单分类" clearable>
+                        <el-option
+                                v-for="dict in bill_type"
                                 :key="dict.value"
                                 :label="dict.label"
                                 :value="parseInt(dict.value)"
                         />
                     </el-select>
                 </el-form-item>
-                <el-form-item label="课程价格" prop="price">
-                    <el-input-number v-model="form.price" :precision="2" :step="0.1" style="margin-right:10px"/>元
+                <el-form-item label="资金流向" prop="flow">
+                    <el-radio-group v-model="form.flow">
+                        <el-radio
+                                v-for="dict in bill_flow"
+                                :key="dict.value"
+                                :label="parseInt(dict.value)"
+                        >{{ dict.label }}
+                        </el-radio>
+                    </el-radio-group>
                 </el-form-item>
-                <el-form-item label="课程简介" prop="info">
-                    <el-input v-model="form.info" type="textarea" placeholder="请输入课程简介"/>
-                </el-form-item>
+
                 <el-form-item label="备注" prop="remark">
                     <el-input v-model="form.remark" type="textarea" placeholder="请输入内容"/>
                 </el-form-item>
@@ -170,11 +197,14 @@
 
 <script setup name="Post">
     import {listBill, addBill, delBill, getBill, updateBill} from "@/api/family/bill";
+    import {selectUser} from "@/api/system/user";
 
     const {proxy} = getCurrentInstance();
     const {bill_type, bill_flow} = proxy.useDict("bill_type", "bill_flow");
 
     const billList = ref([]);
+    const userSelect = ref([]);
+    const dateRange = ref([]);
     const open = ref(false);
     const loading = ref(true);
     const showSearch = ref(true);
@@ -183,6 +213,19 @@
     const multiple = ref(true);
     const total = ref(0);
     const title = ref("");
+    const shortcuts = ref([
+        {
+            text: '今天',
+            value: new Date(),
+        },
+        {
+            text: '昨天',
+            value: () => {
+                const date = new Date()
+                date.setTime(date.getTime() - 3600 * 1000 * 24)
+                return date
+            },
+        }]);
 
     const data = reactive({
         form: {},
@@ -194,10 +237,10 @@
             status: undefined
         },
         rules: {
-            name: [{required: true, message: "课程名称不能为空", trigger: "blur"}],
-            type: [{required: true, message: "课程类型必须选择", trigger: "blur"}],
-            applyTo: [{required: true, message: "课程适用人群必须选择", trigger: "blur"}],
-            price: [{required: true, message: "课程价格必填", trigger: "blur"}],
+            amount: [{required: true, message: "消费金额不能为空", trigger: "blur"}],
+            type: [{required: true, message: "分类必须选择", trigger: "blur"}],
+            payTime: [{required: true, message: "消费日期不能为空", trigger: "blur"}],
+            flow: [{required: true, message: "资金流向必须选择", trigger: "blur"}],
         }
     });
 
@@ -206,11 +249,17 @@
     /** 查询课程列表 */
     function getList() {
         loading.value = true;
-        listBill(queryParams.value).then(response => {
+        listBill(proxy.addDateRange(queryParams.value, dateRange.value)).then(response => {
             billList.value = response.rows;
             total.value = response.total;
             loading.value = false;
         });
+    }
+
+    function getUserSelect() {
+        selectUser().then(response => {
+            userSelect.value = response.data;
+        })
     }
 
     /** 取消按钮 */
@@ -222,14 +271,15 @@
     /** 表单重置 */
     function reset() {
         form.value = {
-            courseId: undefined,
+            billId: undefined,
             type: 1,
-            name: undefined,
-            price: undefined,
-            applyTo: undefined,
-            info: undefined,
+            amount: undefined,
+            payTime: undefined,
+            flow: 2,
+            userName: undefined,
         };
-        proxy.resetForm("courseRef");
+        getUserSelect();
+        proxy.resetForm("billRef");
     }
 
     /** 搜索按钮操作 */
@@ -240,13 +290,14 @@
 
     /** 重置按钮操作 */
     function resetQuery() {
+        dateRange.value = [];
         proxy.resetForm("queryRef");
         handleQuery();
     }
 
     /** 多选框选中数据 */
     function handleSelectionChange(selection) {
-        ids.value = selection.map(item => item.courseId);
+        ids.value = selection.map(item => item.billId);
         single.value = selection.length != 1;
         multiple.value = !selection.length;
     }
@@ -255,25 +306,25 @@
     function handleAdd() {
         reset();
         open.value = true;
-        title.value = "添加课程";
+        title.value = "添加账单";
     }
 
     /** 修改按钮操作 */
     function handleUpdate(row) {
         reset();
-        const courseId = row.courseId || ids.value;
-        getBill(courseId).then(response => {
+        const billId = row.billId || ids.value;
+        getBill(billId).then(response => {
             form.value = response.data;
             open.value = true;
-            title.value = "修改课程";
+            title.value = "修改账单";
         });
     }
 
     /** 提交按钮 */
     function submitForm() {
-        proxy.$refs["courseRef"].validate(valid => {
+        proxy.$refs["billRef"].validate(valid => {
             if (valid) {
-                if (form.value.courseId != undefined) {
+                if (form.value.billId != undefined) {
                     updateBill(form.value).then(response => {
                         proxy.$modal.msgSuccess("修改成功");
                         open.value = false;
@@ -292,9 +343,9 @@
 
     /** 删除按钮操作 */
     function handleDelete(row) {
-        const courseIds = row.courseId || ids.value;
-        proxy.$modal.confirm('是否确认删除课程编号为"' + courseIds + '"的数据项？').then(function () {
-            return delBill(courseIds);
+        const billIds = row.billId || ids.value;
+        proxy.$modal.confirm('是否确认删除？').then(function () {
+            return delBill(billIds);
         }).then(() => {
             getList();
             proxy.$modal.msgSuccess("删除成功");
@@ -304,10 +355,11 @@
 
     /** 导出按钮操作 */
     function handleExport() {
-        proxy.download("tienchin/course/export", {
+        proxy.download("family/bill/export", {
             ...queryParams.value
-        }, `course_${new Date().getTime()}.xlsx`);
+        }, `bill_${new Date().getTime()}.xlsx`);
     }
 
     getList();
+    getUserSelect();
 </script>
