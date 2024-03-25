@@ -1,5 +1,26 @@
 <template>
     <div class="app-container">
+        <el-row style="margin-bottom: 20px">
+            <el-col :span="4" style="margin-right: 10px">
+                <div class="statistic-card-income">
+                    <el-statistic :value="stats.in" precision="2">
+                        <template #title>
+                            <div class="card-font">收入合计</div>
+                        </template>
+                    </el-statistic>
+                </div>
+            </el-col>
+            <el-col :span="4">
+                <div class="statistic-card-expend">
+                    <el-statistic :value="stats.out" precision="2">
+                        <template #title>
+                            <div class="card-font">支出合计</div>
+                        </template>
+                    </el-statistic>
+                </div>
+            </el-col>
+        </el-row>
+
         <el-form :model="queryParams" ref="queryRef" :inline="true" v-show="showSearch">
             <el-form-item label="消费用户" prop="userName">
                 <el-select v-model="queryParams.userName" placeholder="请选择消费用户" clearable>
@@ -82,6 +103,16 @@
             </el-col>
             <el-col :span="1.5">
                 <el-button
+                        type="info"
+                        plain
+                        icon="Upload"
+                        @click="handleImport"
+                        v-hasPermi="['family:bill:import']"
+                >导入
+                </el-button>
+            </el-col>
+            <el-col :span="1.5">
+                <el-button
                         type="warning"
                         plain
                         icon="Download"
@@ -133,7 +164,7 @@
                 @pagination="getList"
         />
 
-        <!-- 添加或修改课程对话框 -->
+        <!-- 添加或修改账单对话框 -->
         <el-dialog :title="title" v-model="open" width="500px" append-to-body>
             <el-form ref="billRef" :model="form" :rules="rules" label-width="110px">
                 <el-form-item label="消费用户" prop="userName">
@@ -192,12 +223,53 @@
                 </div>
             </template>
         </el-dialog>
+
+
+        <!-- 账单导入对话框 -->
+        <el-dialog :title="upload.title" v-model="upload.open" width="400px" append-to-body>
+            <el-upload
+                    ref="uploadRef"
+                    :limit="1"
+                    accept=".xlsx, .xls"
+                    :headers="upload.headers"
+                    :action="upload.url + '?updateSupport=' + upload.updateSupport"
+                    :disabled="upload.isUploading"
+                    :on-progress="handleFileUploadProgress"
+                    :on-success="handleFileSuccess"
+                    :auto-upload="false"
+                    drag
+            >
+                <el-icon class="el-icon--upload">
+                    <upload-filled/>
+                </el-icon>
+                <div class="el-upload__text">将文件拖到此处，或<em>点击上传</em></div>
+                <template #tip>
+                    <div class="el-upload__tip text-center">
+                        <div class="el-upload__tip">
+                            <el-checkbox v-model="upload.updateSupport"/>
+                            是否更新已经存在的账单数据
+                        </div>
+                        <span>仅允许导入xls、xlsx格式文件。</span>
+                        <el-link type="primary" :underline="false" style="font-size:12px;vertical-align: baseline;"
+                                 @click="importTemplate">下载模板
+                        </el-link>
+                    </div>
+                </template>
+            </el-upload>
+            <template #footer>
+                <div class="dialog-footer">
+                    <el-button type="primary" @click="submitFileForm">确 定</el-button>
+                    <el-button @click="upload.open = false">取 消</el-button>
+                </div>
+            </template>
+        </el-dialog>
     </div>
 </template>
 
 <script setup name="Post">
-    import {listBill, addBill, delBill, getBill, updateBill} from "@/api/family/bill";
+    import {listBill, statsBill, addBill, delBill, getBill, updateBill} from "@/api/family/bill";
     import {selectUser} from "@/api/system/user";
+    import {getToken} from "@/utils/auth";
 
     const {proxy} = getCurrentInstance();
     const {bill_type, bill_flow} = proxy.useDict("bill_type", "bill_flow");
@@ -226,7 +298,21 @@
                 return date
             },
         }]);
-
+    /*** 用户导入参数 */
+    const upload = reactive({
+        // 是否显示弹出层（用户导入）
+        open: false,
+        // 弹出层标题（用户导入）
+        title: "",
+        // 是否禁用上传
+        isUploading: false,
+        // 是否更新已经存在的用户数据
+        updateSupport: 0,
+        // 设置上传的请求头部
+        headers: {Authorization: "Bearer " + getToken()},
+        // 上传的地址
+        url: import.meta.env.VITE_APP_BASE_API + "/family/bill/importData"
+    });
     const data = reactive({
         form: {},
         queryParams: {
@@ -241,10 +327,14 @@
             type: [{required: true, message: "分类必须选择", trigger: "blur"}],
             payTime: [{required: true, message: "消费日期不能为空", trigger: "blur"}],
             flow: [{required: true, message: "资金流向必须选择", trigger: "blur"}],
+        },
+        stats: {
+            in: 0,
+            out: 0
         }
     });
 
-    const {queryParams, form, rules} = toRefs(data);
+    const {queryParams, form, rules, stats} = toRefs(data);
 
     /** 查询课程列表 */
     function getList() {
@@ -286,6 +376,7 @@
     function handleQuery() {
         queryParams.value.pageNum = 1;
         getList();
+        handelStatsBill();
     }
 
     /** 重置按钮操作 */
@@ -329,12 +420,14 @@
                         proxy.$modal.msgSuccess("修改成功");
                         open.value = false;
                         getList();
+                        handelStatsBill();
                     });
                 } else {
                     addBill(form.value).then(response => {
                         proxy.$modal.msgSuccess("新增成功");
                         open.value = false;
                         getList();
+                        handelStatsBill();
                     });
                 }
             }
@@ -348,10 +441,41 @@
             return delBill(billIds);
         }).then(() => {
             getList();
+            handelStatsBill();
             proxy.$modal.msgSuccess("删除成功");
         }).catch(() => {
         });
     }
+
+
+    /** 导入按钮操作 */
+    function handleImport() {
+        upload.title = "账单导入";
+        upload.open = true;
+    };
+
+    /** 下载模板操作 */
+    function importTemplate() {
+        proxy.download("family/bill/importTemplate", {}, `bill_template_${new Date().getTime()}.xlsx`);
+    };
+    /**文件上传中处理 */
+    const handleFileUploadProgress = (event, file, fileList) => {
+        upload.isUploading = true;
+    };
+    /** 文件上传成功处理 */
+    const handleFileSuccess = (response, file, fileList) => {
+        upload.open = false;
+        upload.isUploading = false;
+        proxy.$refs["uploadRef"].handleRemove(file);
+        proxy.$alert("<div style='overflow: auto;overflow-x: hidden;max-height: 70vh;padding: 10px 20px 0;'>" + response.msg + "</div>", "导入结果", {dangerouslyUseHTMLString: true});
+        getList();
+        handelStatsBill();
+    };
+
+    /** 提交上传文件 */
+    function submitFileForm() {
+        proxy.$refs["uploadRef"].submit();
+    };
 
     /** 导出按钮操作 */
     function handleExport() {
@@ -360,6 +484,47 @@
         }, `bill_${new Date().getTime()}.xlsx`);
     }
 
+    function handelStatsBill() {
+        statsBill(proxy.addDateRange(queryParams.value, dateRange.value)).then(response => {
+            for (let statsData in response.data) {
+                const data = response.data[statsData]
+                if (data.flow === 1) {
+                    stats.value.in = data.amount;
+                }
+                if (data.flow === 2) {
+                    stats.value.out = data.amount;
+                }
+            }
+        })
+    }
+
     getList();
+    handelStatsBill();
     getUserSelect();
 </script>
+<style scoped>
+    .card-font {
+        font-size: 16px;
+        font-weight: bold;
+    }
+
+    .el-statistic {
+        text-align: center;
+    }
+
+    .statistic-card-income {
+        padding: 20px;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        border-radius: 8px;
+        box-shadow: 8px 8px 8px rgba(0, 0, 0, 0.1);
+        background-color: #FFFFFF;
+    }
+
+    .statistic-card-expend {
+        padding: 20px;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        border-radius: 8px;
+        box-shadow: 8px 8px 8px rgba(0, 0, 0, 0.1);
+        background-color: #FFFFFF;
+    }
+</style>

@@ -8,6 +8,14 @@ export function listBill(query) {
     params: query
   })
 }
+// 查询账单管理列表
+export function statsBill(query) {
+  return request({
+    url: '/family/bill/stats/flow',
+    method: 'get',
+    params: query
+  })
+}
 
 // 查询账单管理详细
 export function getBill(billId) {
