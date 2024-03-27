@@ -8,7 +8,7 @@ export function listBill(query) {
     params: query
   })
 }
-// 查询账单管理列表
+// 统计账单情况
 export function statsBill(query) {
   return request({
     url: '/family/bill/stats/flow',

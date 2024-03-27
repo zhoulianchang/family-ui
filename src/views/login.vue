@@ -1,7 +1,7 @@
 <template>
     <div class="login">
         <el-form ref="loginRef" :model="loginForm" :rules="loginRules" class="login-form">
-            <h3 class="title">TienChin后台管理系统</h3>
+            <h3 class="title">家庭管理系统</h3>
             <el-form-item prop="username">
                 <el-input
                         v-model="loginForm.username"
@@ -82,8 +82,8 @@
     const {proxy} = getCurrentInstance();
 
     const loginForm = ref({
-        username: "admin",
-        password: "admin123",
+        username: undefined,
+        password: undefined,
         rememberMe: false,
         code: "",
         uuid: ""

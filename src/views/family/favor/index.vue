@@ -1,56 +1,18 @@
 <template>
     <div class="app-container">
-        <el-row style="margin-bottom: 20px">
-            <el-col :span="4" style="margin-right: 10px">
-                <div class="statistic-card-income">
-                    <el-statistic :value="stats.in" precision="2">
-                        <template #title>
-                            <div class="card-font">收入合计</div>
-                        </template>
-                    </el-statistic>
-                </div>
-            </el-col>
-            <el-col :span="4">
-                <div class="statistic-card-expend">
-                    <el-statistic :value="stats.out" precision="2">
-                        <template #title>
-                            <div class="card-font">支出合计</div>
-                        </template>
-                    </el-statistic>
-                </div>
-            </el-col>
-        </el-row>
-
         <el-form :model="queryParams" ref="queryRef" :inline="true" v-show="showSearch">
-            <el-form-item label="消费用户" prop="userName">
-                <el-select v-model="queryParams.userName" placeholder="请选择消费用户" clearable>
+            <el-form-item label="平账情况" prop="balanced">
+                <el-select v-model="queryParams.balanced" placeholder="请选择" clearable>
                     <el-option
-                            v-for="dict in userSelect"
-                            :key="dict.id"
-                            :label="dict.name"
-                            :value="dict.name"
-                    />
-                </el-select>
-            </el-form-item>
-            <el-form-item label="分类" prop="type">
-                <el-select v-model="queryParams.type" placeholder="请选择账单分类" clearable>
-                    <el-option
-                            v-for="dict in bill_type"
+                            v-for="dict in favor_balanced"
                             :key="dict.value"
                             :label="dict.label"
                             :value="parseInt(dict.value)"
                     />
                 </el-select>
             </el-form-item>
-            <el-form-item label="资金流向" prop="flow">
-                <el-select v-model="queryParams.flow" placeholder="请选择资金流向" clearable>
-                    <el-option
-                            v-for="dict in bill_flow"
-                            :key="dict.value"
-                            :label="dict.label"
-                            :value="parseInt(dict.value)"
-                    />
-                </el-select>
+            <el-form-item label="礼金人" prop="userNameLike">
+                <el-input v-model="queryParams.userNameLike" placeholder="请输入礼金人名称"></el-input>
             </el-form-item>
             <el-form-item label="消费日期" style="width: 308px">
                 <el-date-picker
@@ -75,7 +37,7 @@
                         plain
                         icon="Plus"
                         @click="handleAdd"
-                        v-hasPermi="['family:bill:add']"
+                        v-hasPermi="['family:favor:add']"
                 >新增
                 </el-button>
             </el-col>
@@ -86,7 +48,7 @@
                         icon="Edit"
                         :disabled="single"
                         @click="handleUpdate"
-                        v-hasPermi="['family:bill:edit']"
+                        v-hasPermi="['family:favor:edit']"
                 >修改
                 </el-button>
             </el-col>
@@ -97,7 +59,7 @@
                         icon="Delete"
                         :disabled="multiple"
                         @click="handleDelete"
-                        v-hasPermi="['family:bill:remove']"
+                        v-hasPermi="['family:favor:remove']"
                 >删除
                 </el-button>
             </el-col>
@@ -107,7 +69,7 @@
                         plain
                         icon="Upload"
                         @click="handleImport"
-                        v-hasPermi="['family:bill:import']"
+                        v-hasPermi="['family:favor:import']"
                 >导入
                 </el-button>
             </el-col>
@@ -117,26 +79,30 @@
                         plain
                         icon="Download"
                         @click="handleExport"
-                        v-hasPermi="['family:bill:export']"
+                        v-hasPermi="['family:favor:export']"
                 >导出
                 </el-button>
             </el-col>
             <right-toolbar v-model:showSearch="showSearch" @queryTable="getList"></right-toolbar>
         </el-row>
 
-        <el-table v-loading="loading" :data="billList" @selection-change="handleSelectionChange">
+        <el-table v-loading="loading" :data="favorList" @selection-change="handleSelectionChange">
             <el-table-column type="selection" width="55" align="center"/>
-            <el-table-column label="账单编号" align="center" prop="billId" :show-overflow-tooltip="true" width="80"/>
-            <el-table-column label="消费用户" align="center" prop="userName" :show-overflow-tooltip="true" width="120"/>
-            <el-table-column label="消费日期" align="center" prop="payTime" width="200">
+            <el-table-column label="人情编号" align="center" prop="favorId" :show-overflow-tooltip="true" width="80"/>
+            <el-table-column label="关联人情编号" align="center" prop="relationId" :show-overflow-tooltip="true" width="120">
                 <template #default="scope">
-                    <span>{{ parseTime(scope.row.payTime, '{y}-{m}-{d}') }}</span>
+                    <span>{{scope.row.relationId?scope.row.relationId:"-"}}</span>
                 </template>
             </el-table-column>
-            <el-table-column label="消费金额" align="center" prop="amount" :show-overflow-tooltip="true" width="100"/>
-            <el-table-column label="分类" align="center" prop="type" width="100">
+            <el-table-column label="礼金人" align="center" prop="userName" :show-overflow-tooltip="true" width="120"/>
+            <el-table-column label="人情日期" align="center" prop="favorTime" width="200">
                 <template #default="scope">
-                    <dict-tag :options="bill_type" :value="scope.row.type"/>
+                    <span>{{ parseTime(scope.row.favorTime, '{y}-{m}-{d}') }}</span>
+                </template>
+            </el-table-column>
+            <el-table-column label="礼金金额" align="center" prop="amount" :show-overflow-tooltip="true" width="100">
+                <template #default="scope">
+                    <span>{{scope.row.amount}}元</span>
                 </template>
             </el-table-column>
             <el-table-column label="资金流向" align="center" prop="flow" width="80">
@@ -144,17 +110,19 @@
                     <dict-tag :options="bill_flow" :value="scope.row.flow"/>
                 </template>
             </el-table-column>
+            <el-table-column label="平账情况" align="center" prop="balanced" width="80">
+                <template #default="scope">
+                    <dict-tag :options="favor_balanced" :value="scope.row.balanced"/>
+                </template>
+            </el-table-column>
             <el-table-column label="备注" align="center" prop="remark" :show-overflow-tooltip="true" width="200"/>
             <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
                 <template #default="scope">
-                    <el-button link type="primary" icon="View" @click="handleView(scope.row)"
-                               v-hasPermi="['family:bill:query']">详情
-                    </el-button>
                     <el-button link type="primary" icon="Edit" @click="handleUpdate(scope.row)"
-                               v-hasPermi="['family:bill:edit']">修改
+                               v-hasPermi="['family:favor:edit']">修改
                     </el-button>
                     <el-button link type="primary" icon="Delete" @click="handleDelete(scope.row)"
-                               v-hasPermi="['family:bill:remove']">删除
+                               v-hasPermi="['family:favor:remove']">删除
                     </el-button>
                 </template>
             </el-table-column>
@@ -168,41 +136,37 @@
                 @pagination="getList"
         />
 
-        <!-- 添加或修改账单对话框 -->
-        <el-dialog :title="title" v-model="open" width="500px" append-to-body>
-            <el-form ref="billRef" :model="form" :rules="rules" label-width="110px">
-                <el-form-item label="消费用户" prop="userName">
-                    <el-select v-model="form.userName" placeholder="请选择消费用户" clearable>
-                        <el-option
-                                v-for="dict in userSelect"
-                                :key="dict.id"
-                                :label="dict.name"
-                                :value="dict.name"
-                        />
-                    </el-select>
+        <!-- 添加或修改人情账薄对话框 -->
+        <el-dialog :title="title" v-model="open" width="400px" append-to-body>
+            <el-form ref="favorRef" :model="form" :rules="rules" label-width="100px">
+                <el-form-item label="礼金人" prop="userName">
+                    <el-input v-model="form.userName" placeholder="请输入礼金人" style="width: 220px"></el-input>
                 </el-form-item>
-                <el-form-item label="消费日期" prop="payTime">
+                <el-form-item label="人情时间" prop="favorTime">
                     <el-date-picker
-                            v-model="form.payTime"
+                            v-model="form.favorTime"
                             type="date"
-                            placeholder="请选择一个消费日期"
+                            placeholder="请选择一个日期"
                             :shortcuts="shortcuts"
                     />
                 </el-form-item>
-                <el-form-item label="消费金额" prop="amount">
+                <el-form-item label="礼金金额" prop="amount">
                     <el-input-number style="margin-right: 10px" v-model="form.amount" :precision="2" :step="1"
                                      :min="0.1"/>
                     元
                 </el-form-item>
-                <el-form-item label="分类" prop="type">
-                    <el-select v-model="form.type" placeholder="请选择账单分类" clearable>
-                        <el-option
-                                v-for="dict in bill_type"
+                <el-form-item label="平账情况" prop="balanced">
+                    <el-radio-group v-model="form.balanced">
+                        <el-radio
+                                v-for="dict in favor_balanced"
                                 :key="dict.value"
-                                :label="dict.label"
-                                :value="parseInt(dict.value)"
-                        />
-                    </el-select>
+                                :label="parseInt(dict.value)"
+                        >{{ dict.label }}
+                        </el-radio>
+                    </el-radio-group>
+                </el-form-item>
+                <el-form-item v-if="form.balanced && form.balanced === 2" label="关联礼金编号" prop="relationId">
+                    <el-input v-model="form.relationId" placeholder="请输入关联礼金编号" style="width: 220px"></el-input>
                 </el-form-item>
                 <el-form-item label="资金流向" prop="flow">
                     <el-radio-group v-model="form.flow">
@@ -216,7 +180,7 @@
                 </el-form-item>
 
                 <el-form-item label="备注" prop="remark">
-                    <el-input v-model="form.remark" type="textarea" placeholder="请输入内容"/>
+                    <el-input v-model="form.remark" type="textarea" placeholder="请输入内容" style="width: 220px"/>
                 </el-form-item>
             </el-form>
             <template #footer>
@@ -226,74 +190,6 @@
                 </div>
             </template>
         </el-dialog>
-
-
-        <!-- 查看账单详情 -->
-        <el-dialog :title="title" v-model="viewOpen" width="500px" append-to-body>
-            <el-form :disabled="true" :model="form">
-                <el-form-item label="消费用户" prop="userName">
-                    {{form.userName?form.userName:"-"}}
-                </el-form-item>
-                <el-row>
-                    <el-col :span="12">
-                        <el-form-item label="消费日期" prop="payTime">
-                            {{ parseTime(form.payTime, '{y}-{m}-{d}') }}
-                        </el-form-item>
-                    </el-col>
-                    <el-col :span="12">
-                        <el-form-item label="消费金额" prop="amount">
-                            {{form.amount}} 元
-                        </el-form-item>
-                    </el-col>
-                </el-row>
-                <el-row>
-                    <el-col :span="12">
-                        <el-form-item label="分类" prop="type">
-                            <dict-tag :options="bill_type" :value="form.type"/>
-                        </el-form-item>
-                    </el-col>
-                    <el-col :span="12">
-                        <el-form-item label="资金流向" prop="flow">
-                            <dict-tag :options="bill_flow" :value="form.flow"/>
-                        </el-form-item>
-                    </el-col>
-                </el-row>
-
-                <el-form-item label="备注" prop="remark">
-                    {{form.remark?form.remark:"-"}}
-                </el-form-item>
-                <el-row>
-                    <el-col :span="12">
-                        <el-form-item label="创建人" prop="createBy">
-                            {{form.createBy?form.createBy:"-"}}
-                        </el-form-item>
-                    </el-col>
-                    <el-col :span="12">
-                        <el-form-item label="创建时间" prop="createTime">
-                            {{form.createTime?parseTime(form.createTime):"-"}}
-                        </el-form-item>
-                    </el-col>
-                </el-row>
-                <el-row>
-                    <el-col :span="12">
-                        <el-form-item label="最近更新人">
-                            {{form.updateBy?form.updateBy:"-"}}
-                        </el-form-item>
-                    </el-col>
-                    <el-col :span="12">
-                        <el-form-item label="最近更新时间">
-                            {{form.updateTime?parseTime(form.updateTime):"-"}}
-                        </el-form-item>
-                    </el-col>
-                </el-row>
-            </el-form>
-            <template #footer>
-                <div class="dialog-footer">
-                    <el-button @click="cancelView">取 消</el-button>
-                </div>
-            </template>
-        </el-dialog>
-
 
         <!-- 账单导入对话框 -->
         <el-dialog :title="upload.title" v-model="upload.open" width="400px" append-to-body>
@@ -337,18 +233,17 @@
 </template>
 
 <script setup name="Post">
-    import {listBill, statsBill, addBill, delBill, getBill, updateBill} from "@/api/family/bill";
+    import {listFavor, addFavor, delFavor, getFavor, updateFavor} from "@/api/family/favor";
     import {selectUser} from "@/api/system/user";
     import {getToken} from "@/utils/auth";
 
     const {proxy} = getCurrentInstance();
-    const {bill_type, bill_flow} = proxy.useDict("bill_type", "bill_flow");
+    const {favor_balanced, bill_flow} = proxy.useDict("favor_balanced", "bill_flow");
 
-    const billList = ref([]);
+    const favorList = ref([]);
     const userSelect = ref([]);
     const dateRange = ref([]);
     const open = ref(false);
-    const viewOpen = ref(false);
     const loading = ref(true);
     const showSearch = ref(true);
     const ids = ref([]);
@@ -382,7 +277,7 @@
         // 设置上传的请求头部
         headers: {Authorization: "Bearer " + getToken()},
         // 上传的地址
-        url: import.meta.env.VITE_APP_BASE_API + "/family/bill/importData"
+        url: import.meta.env.VITE_APP_BASE_API + "/family/favor/importData"
     });
     const data = reactive({
         form: {},
@@ -394,9 +289,10 @@
             status: undefined
         },
         rules: {
-            amount: [{required: true, message: "消费金额不能为空", trigger: "blur"}],
-            type: [{required: true, message: "分类必须选择", trigger: "blur"}],
-            payTime: [{required: true, message: "消费日期不能为空", trigger: "blur"}],
+            userName: [{required: true, message: "礼金人不能为空", trigger: "blur"}],
+            amount: [{required: true, message: "礼金金额不能为空", trigger: "blur"}],
+            balanced: [{required: true, message: "平账情况必须选择", trigger: "blur"}],
+            favorTime: [{required: true, message: "人情时间不能为空", trigger: "blur"}],
             flow: [{required: true, message: "资金流向必须选择", trigger: "blur"}],
         },
         stats: {
@@ -410,17 +306,11 @@
     /** 查询课程列表 */
     function getList() {
         loading.value = true;
-        listBill(proxy.addDateRange(queryParams.value, dateRange.value)).then(response => {
-            billList.value = response.rows;
+        listFavor(proxy.addDateRange(queryParams.value, dateRange.value)).then(response => {
+            favorList.value = response.rows;
             total.value = response.total;
             loading.value = false;
         });
-    }
-
-    function getUserSelect() {
-        selectUser().then(response => {
-            userSelect.value = response.data;
-        })
     }
 
     /** 取消按钮 */
@@ -437,22 +327,22 @@
     /** 表单重置 */
     function reset() {
         form.value = {
-            billId: undefined,
-            type: undefined,
-            amount: undefined,
-            payTime: new Date(),
-            flow: 2,
+            favorId: undefined,
+            relationId: undefined,
             userName: undefined,
+            flow: undefined,
+            favorTime: new Date(),
+            flow: 2,
+            amount: undefined,
+            balanced: 1,
         };
-        getUserSelect();
-        proxy.resetForm("billRef");
+        proxy.resetForm("favorRef");
     }
 
     /** 搜索按钮操作 */
     function handleQuery() {
         queryParams.value.pageNum = 1;
         getList();
-        handelStatsBill();
     }
 
     /** 重置按钮操作 */
@@ -464,7 +354,7 @@
 
     /** 多选框选中数据 */
     function handleSelectionChange(selection) {
-        ids.value = selection.map(item => item.billId);
+        ids.value = selection.map(item => item.favorId);
         single.value = selection.length != 1;
         multiple.value = !selection.length;
     }
@@ -473,37 +363,38 @@
     function handleAdd() {
         reset();
         open.value = true;
-        title.value = "添加账单";
+        title.value = "添加人情账薄";
     }
 
     /** 修改按钮操作 */
     function handleUpdate(row) {
         reset();
-        const billId = row.billId || ids.value;
-        getBill(billId).then(response => {
+        const favorId = row.favorId || ids.value;
+        getFavor(favorId).then(response => {
             form.value = response.data;
             open.value = true;
-            title.value = "修改账单";
+            title.value = "修改人情账薄";
         });
     }
 
     /** 提交按钮 */
     function submitForm() {
-        proxy.$refs["billRef"].validate(valid => {
+        proxy.$refs["favorRef"].validate(valid => {
             if (valid) {
-                if (form.value.billId != undefined) {
-                    updateBill(form.value).then(response => {
+                if (form.value.balanced !== 2) {
+                    delete form.value.relationId;
+                }
+                if (form.value.favorId != undefined) {
+                    updateFavor(form.value).then(response => {
                         proxy.$modal.msgSuccess("修改成功");
                         open.value = false;
                         getList();
-                        handelStatsBill();
                     });
                 } else {
-                    addBill(form.value).then(response => {
+                    addFavor(form.value).then(response => {
                         proxy.$modal.msgSuccess("新增成功");
                         open.value = false;
                         getList();
-                        handelStatsBill();
                     });
                 }
             }
@@ -512,12 +403,11 @@
 
     /** 删除按钮操作 */
     function handleDelete(row) {
-        const billIds = row.billId || ids.value;
-        proxy.$modal.confirm('是否确认删除？').then(function () {
-            return delBill(billIds);
+        const favorIds = row.favorId || ids.value;
+        proxy.$modal.confirm('是否确认删除编号为"' + favorIds + '"的数据项?').then(function () {
+            return delFavor(favorIds);
         }).then(() => {
             getList();
-            handelStatsBill();
             proxy.$modal.msgSuccess("删除成功");
         }).catch(() => {
         });
@@ -532,7 +422,7 @@
 
     /** 下载模板操作 */
     function importTemplate() {
-        proxy.download("family/bill/importTemplate", {}, `bill_template_${new Date().getTime()}.xlsx`);
+        proxy.download("family/favor/importTemplate", {}, `favor_template_${new Date().getTime()}.xlsx`);
     };
     /**文件上传中处理 */
     const handleFileUploadProgress = (event, file, fileList) => {
@@ -545,7 +435,6 @@
         proxy.$refs["uploadRef"].handleRemove(file);
         proxy.$alert("<div style='overflow: auto;overflow-x: hidden;max-height: 70vh;padding: 10px 20px 0;'>" + response.msg + "</div>", "导入结果", {dangerouslyUseHTMLString: true});
         getList();
-        handelStatsBill();
     };
 
     /** 提交上传文件 */
@@ -555,40 +444,12 @@
 
     /** 导出按钮操作 */
     function handleExport() {
-        proxy.download("family/bill/export", {
+        proxy.download("family/favor/export", {
             ...queryParams.value
-        }, `bill_${new Date().getTime()}.xlsx`);
-    }
-
-    function handelStatsBill() {
-        statsBill(proxy.addDateRange(queryParams.value, dateRange.value)).then(response => {
-            for (let statsData in response.data) {
-                const data = response.data[statsData]
-                if (data.flow === 1) {
-                    stats.value.in = data.amount;
-                }
-                if (data.flow === 2) {
-                    stats.value.out = data.amount;
-                }
-            }
-        })
-    }
-
-    /**
-     * 查看账单详情
-     * @param row
-     */
-    function handleView(row) {
-        getBill(row.billId).then(response => {
-            form.value = response.data;
-            viewOpen.value = true;
-            title.value = "查看账单";
-        });
+        }, `favor_${new Date().getTime()}.xlsx`);
     }
 
     getList();
-    handelStatsBill();
-    getUserSelect();
 </script>
 <style scoped>
     .card-font {
