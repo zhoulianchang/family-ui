@@ -14,7 +14,7 @@
             <el-form-item label="礼金人" prop="userNameLike">
                 <el-input v-model="queryParams.userNameLike" placeholder="请输入礼金人名称"></el-input>
             </el-form-item>
-            <el-form-item label="消费日期" style="width: 308px">
+            <el-form-item label="人情日期" style="width: 308px">
                 <el-date-picker
                         v-model="dateRange"
                         value-format="YYYY-MM-DD"
@@ -234,14 +234,12 @@
 
 <script setup name="Post">
     import {listFavor, addFavor, delFavor, getFavor, updateFavor} from "@/api/family/favor";
-    import {selectUser} from "@/api/system/user";
     import {getToken} from "@/utils/auth";
 
     const {proxy} = getCurrentInstance();
     const {favor_balanced, bill_flow} = proxy.useDict("favor_balanced", "bill_flow");
 
     const favorList = ref([]);
-    const userSelect = ref([]);
     const dateRange = ref([]);
     const open = ref(false);
     const loading = ref(true);

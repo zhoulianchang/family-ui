@@ -562,6 +562,8 @@
 
     function handelStatsBill() {
         statsBill(proxy.addDateRange(queryParams.value, dateRange.value)).then(response => {
+            stats.value.in = 0;
+            stats.value.out = 0;
             for (let statsData in response.data) {
                 const data = response.data[statsData]
                 if (data.flow === 1) {
