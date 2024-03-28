@@ -416,7 +416,7 @@
 
     /** 导入按钮操作 */
     function handleImport() {
-        upload.title = "账单导入";
+        upload.title = "人情账薄导入";
         upload.open = true;
     };
 
