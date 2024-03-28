@@ -124,16 +124,20 @@
             <right-toolbar v-model:showSearch="showSearch" @queryTable="getList"></right-toolbar>
         </el-row>
 
-        <el-table v-loading="loading" :data="billList" @selection-change="handleSelectionChange">
+        <el-table ref="billTableRef" v-loading="loading" :data="billList" @selection-change="handleSelectionChange" :default-sort="defaultSort" @sort-change="handleSortChange">
             <el-table-column type="selection" width="55" align="center"/>
-            <el-table-column label="账单编号" align="center" prop="billId" :show-overflow-tooltip="true" width="80"/>
-            <el-table-column label="消费用户" align="center" prop="userName" :show-overflow-tooltip="true" width="120"/>
-            <el-table-column label="消费日期" align="center" prop="payTime" width="200">
+            <el-table-column label="账单编号" align="center" prop="billId" :show-overflow-tooltip="true" width="100" sortable="custom"
+                             :sort-orders="['descending', 'ascending']"/>
+            <el-table-column label="消费用户" align="center" prop="userName" :show-overflow-tooltip="true" width="120" sortable="custom"
+                             :sort-orders="['descending', 'ascending']"/>
+            <el-table-column label="消费日期" align="center" prop="payTime" width="200" sortable="custom"
+                             :sort-orders="['descending', 'ascending']">
                 <template #default="scope">
                     <span>{{ parseTime(scope.row.payTime, '{y}-{m}-{d}') }}</span>
                 </template>
             </el-table-column>
-            <el-table-column label="消费金额" align="center" prop="amount" :show-overflow-tooltip="true" width="100"/>
+            <el-table-column label="消费金额" align="center" prop="amount" :show-overflow-tooltip="true" width="100" sortable="custom"
+                             :sort-orders="['descending', 'ascending']"/>
             <el-table-column label="分类" align="center" prop="type" width="100">
                 <template #default="scope">
                     <dict-tag :options="bill_type" :value="scope.row.type"/>
@@ -340,7 +344,7 @@
     import {listBill, statsBill, addBill, delBill, getBill, updateBill} from "@/api/family/bill";
     import {selectUser} from "@/api/system/user";
     import {getToken} from "@/utils/auth";
-
+    import {onMounted} from 'vue'
     const {proxy} = getCurrentInstance();
     const {bill_type, bill_flow} = proxy.useDict("bill_type", "bill_flow");
 
@@ -356,6 +360,7 @@
     const multiple = ref(true);
     const total = ref(0);
     const title = ref("");
+    const defaultSort = ref({prop: "billId", order: "descending"});
     const shortcuts = ref([
         {
             text: '今天',
@@ -459,6 +464,7 @@
     function resetQuery() {
         dateRange.value = [];
         proxy.resetForm("queryRef");
+        proxy.$refs["billTableRef"].sort(defaultSort.value.prop, defaultSort.value.order);
         handleQuery();
     }
 
@@ -523,6 +529,12 @@
         });
     }
 
+    /** 排序触发事件 */
+    function handleSortChange(column, prop, order) {
+        queryParams.value.orderByColumn = column.prop;
+        queryParams.value.isAsc = column.order;
+        getList();
+    }
 
     /** 导入按钮操作 */
     function handleImport() {
@@ -587,10 +599,14 @@
             title.value = "查看账单";
         });
     }
+    onMounted(() => {
+        queryParams.value.orderByColumn = defaultSort.value.prop;
+        queryParams.value.isAsc = defaultSort.value.order;
+        getList();
+        handelStatsBill();
+        getUserSelect();
+    });
 
-    getList();
-    handelStatsBill();
-    getUserSelect();
 </script>
 <style scoped>
     .card-font {

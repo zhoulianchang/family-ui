@@ -86,21 +86,26 @@
             <right-toolbar v-model:showSearch="showSearch" @queryTable="getList"></right-toolbar>
         </el-row>
 
-        <el-table v-loading="loading" :data="favorList" @selection-change="handleSelectionChange">
+        <el-table v-loading="loading" :data="favorList" @selection-change="handleSelectionChange"
+                  :default-sort="defaultSort" @sort-change="handleSortChange">
             <el-table-column type="selection" width="55" align="center"/>
-            <el-table-column label="人情编号" align="center" prop="favorId" :show-overflow-tooltip="true" width="80"/>
+            <el-table-column label="人情编号" align="center" prop="favorId" :show-overflow-tooltip="true" width="100" sortable="custom"
+                             :sort-orders="['descending', 'ascending']"/>
             <el-table-column label="关联人情编号" align="center" prop="relationId" :show-overflow-tooltip="true" width="120">
                 <template #default="scope">
                     <span>{{scope.row.relationId?scope.row.relationId:"-"}}</span>
                 </template>
             </el-table-column>
-            <el-table-column label="礼金人" align="center" prop="userName" :show-overflow-tooltip="true" width="120"/>
-            <el-table-column label="人情日期" align="center" prop="favorTime" width="200">
+            <el-table-column label="礼金人" align="center" prop="userName" :show-overflow-tooltip="true" width="120" sortable="custom"
+                             :sort-orders="['descending', 'ascending']"/>
+            <el-table-column label="人情日期" align="center" prop="favorTime" width="200" sortable="custom"
+                             :sort-orders="['descending', 'ascending']">
                 <template #default="scope">
                     <span>{{ parseTime(scope.row.favorTime, '{y}-{m}-{d}') }}</span>
                 </template>
             </el-table-column>
-            <el-table-column label="礼金金额" align="center" prop="amount" :show-overflow-tooltip="true" width="100">
+            <el-table-column label="礼金金额" align="center" prop="amount" :show-overflow-tooltip="true" width="100" sortable="custom"
+                             :sort-orders="['descending', 'ascending']">
                 <template #default="scope">
                     <span>{{scope.row.amount}}元</span>
                 </template>
@@ -235,6 +240,7 @@
 <script setup name="Post">
     import {listFavor, addFavor, delFavor, getFavor, updateFavor} from "@/api/family/favor";
     import {getToken} from "@/utils/auth";
+    import {onMounted} from 'vue'
 
     const {proxy} = getCurrentInstance();
     const {favor_balanced, bill_flow} = proxy.useDict("favor_balanced", "bill_flow");
@@ -249,6 +255,7 @@
     const multiple = ref(true);
     const total = ref(0);
     const title = ref("");
+    const defaultSort = ref({prop: "favorId", order: "descending"});
     const shortcuts = ref([
         {
             text: '今天',
@@ -447,7 +454,18 @@
         }, `favor_${new Date().getTime()}.xlsx`);
     }
 
-    getList();
+    /** 排序触发事件 */
+    function handleSortChange(column, prop, order) {
+        queryParams.value.orderByColumn = column.prop;
+        queryParams.value.isAsc = column.order;
+        getList();
+    }
+
+    onMounted(() => {
+        queryParams.value.orderByColumn = defaultSort.value.prop;
+        queryParams.value.isAsc = defaultSort.value.order;
+        getList();
+    });
 </script>
 <style scoped>
     .card-font {
