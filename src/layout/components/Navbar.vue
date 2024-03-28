@@ -7,7 +7,7 @@
 
         <div class="right-menu">
             <template v-if="appStore.device !== 'mobile'">
-                <header-search id="header-search" class="right-menu-item"/>-->
+                <header-search id="header-search" class="right-menu-item"/>
 
                 <screenfull id="screenfull" class="right-menu-item hover-effect"/>
 
