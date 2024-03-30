@@ -60,7 +60,7 @@
                     <span>{{scope.row.balance}}元</span>
                 </template>
             </el-table-column>
-            <el-table-column label="账户号码" align="center" prop="cardNo" :show-overflow-tooltip="true" width="150"/>
+            <el-table-column label="账户号码" align="center" prop="cardNo" :show-overflow-tooltip="true" width="200"/>
             <el-table-column label="账户类型" align="center" prop="type" width="80">
                 <template #default="scope">
                     <dict-tag :options="account_type" :value="scope.row.type"/>
@@ -69,11 +69,6 @@
             <el-table-column label="所属用户" align="center" prop="userId" width="80">
                 <template #default="scope">
                     {{ userSelectMap[scope.row.userId] }}
-                </template>
-            </el-table-column>
-            <el-table-column label="创建日期" align="center" prop="createTime" width="200">
-                <template #default="scope">
-                    <span>{{ parseTime(scope.row.createTime) }}</span>
                 </template>
             </el-table-column>
             <el-table-column label="备注" align="center" prop="remark" :show-overflow-tooltip="true" width="200"/>
