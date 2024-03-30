@@ -337,7 +337,7 @@
             userName: undefined,
             flow: undefined,
             favorTime: new Date(),
-            flow: 2,
+            flow: 1,
             amount: undefined,
             balanced: 1,
         };
