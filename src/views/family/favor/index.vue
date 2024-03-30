@@ -157,7 +157,7 @@
                 </el-form-item>
                 <el-form-item label="礼金金额" prop="amount">
                     <el-input-number style="margin-right: 10px" v-model="form.amount" :precision="2" :step="1"
-                                     :min="0.1"/>
+                                     :min="0"/>
                     元
                 </el-form-item>
                 <el-form-item label="平账情况" prop="balanced">
@@ -237,7 +237,7 @@
     </div>
 </template>
 
-<script setup name="Post">
+<script setup name="Favor">
     import {listFavor, addFavor, delFavor, getFavor, updateFavor} from "@/api/family/favor";
     import {getToken} from "@/utils/auth";
     import {onMounted} from 'vue'
@@ -308,7 +308,7 @@
 
     const {queryParams, form, rules, stats} = toRefs(data);
 
-    /** 查询课程列表 */
+    /** 查询列表 */
     function getList() {
         loading.value = true;
         listFavor(proxy.addDateRange(queryParams.value, dateRange.value)).then(response => {
@@ -468,28 +468,4 @@
     });
 </script>
 <style scoped>
-    .card-font {
-        font-size: 16px;
-        font-weight: bold;
-    }
-
-    .el-statistic {
-        text-align: center;
-    }
-
-    .statistic-card-income {
-        padding: 20px;
-        border: 1px solid rgba(0, 0, 0, 0.1);
-        border-radius: 8px;
-        box-shadow: 8px 8px 8px rgba(0, 0, 0, 0.1);
-        background-color: #FFFFFF;
-    }
-
-    .statistic-card-expend {
-        padding: 20px;
-        border: 1px solid rgba(0, 0, 0, 0.1);
-        border-radius: 8px;
-        box-shadow: 8px 8px 8px rgba(0, 0, 0, 0.1);
-        background-color: #FFFFFF;
-    }
 </style>

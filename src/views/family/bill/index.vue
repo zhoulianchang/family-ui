@@ -1,7 +1,7 @@
 <template>
     <div class="app-container">
         <el-row style="margin-bottom: 20px">
-            <el-col :span="4" style="margin-right: 10px">
+            <el-col :span="11" style="margin-right: 10px">
                 <div class="statistic-card-income">
                     <el-statistic :value="stats.in" precision="2">
                         <template #title>
@@ -10,7 +10,7 @@
                     </el-statistic>
                 </div>
             </el-col>
-            <el-col :span="4">
+            <el-col :span="11">
                 <div class="statistic-card-expend">
                     <el-statistic :value="stats.out" precision="2">
                         <template #title>
@@ -185,6 +185,16 @@
                         />
                     </el-select>
                 </el-form-item>
+                <el-form-item label="扣款账户" prop="accountId">
+                    <el-select v-model="form.accountId" placeholder="请选择扣款账户" clearable>
+                        <el-option
+                                v-for="dict in accountSelect"
+                                :key="dict.id"
+                                :label="dict.name"
+                                :value="dict.id"
+                        />
+                    </el-select>
+                </el-form-item>
                 <el-form-item label="消费日期" prop="payTime">
                     <el-date-picker
                             v-model="form.payTime"
@@ -195,7 +205,7 @@
                 </el-form-item>
                 <el-form-item label="消费金额" prop="amount">
                     <el-input-number style="margin-right: 10px" v-model="form.amount" :precision="2" :step="1"
-                                     :min="0.1"/>
+                                     :min="0"/>
                     元
                 </el-form-item>
                 <el-form-item label="分类" prop="type">
@@ -235,9 +245,18 @@
         <!-- 查看账单详情 -->
         <el-dialog :title="title" v-model="viewOpen" width="500px" append-to-body>
             <el-form :disabled="true" :model="form">
-                <el-form-item label="消费用户" prop="userName">
-                    {{form.userName?form.userName:"-"}}
-                </el-form-item>
+                <el-row>
+                    <el-col :span="12">
+                        <el-form-item label="消费用户" prop="userName">
+                            {{form.userName?form.userName:"-"}}
+                        </el-form-item>
+                    </el-col>
+                    <el-col :span="12">
+                        <el-form-item label="扣款账户" prop="accountName">
+                            {{form.accountName}}
+                        </el-form-item>
+                    </el-col>
+                </el-row>
                 <el-row>
                     <el-col :span="12">
                         <el-form-item label="消费日期" prop="payTime">
@@ -340,9 +359,10 @@
     </div>
 </template>
 
-<script setup name="Post">
+<script setup name="Bill">
     import {listBill, statsBill, addBill, delBill, getBill, updateBill} from "@/api/family/bill";
     import {selectUser} from "@/api/system/user";
+    import {selectAccount} from "@/api/family/account";
     import {getToken} from "@/utils/auth";
     import {onMounted} from 'vue'
     const {proxy} = getCurrentInstance();
@@ -350,6 +370,7 @@
 
     const billList = ref([]);
     const userSelect = ref([]);
+    const accountSelect = ref([]);
     const dateRange = ref([]);
     const open = ref(false);
     const viewOpen = ref(false);
@@ -400,6 +421,7 @@
         },
         rules: {
             amount: [{required: true, message: "消费金额不能为空", trigger: "blur"}],
+            accountId: [{required: true, message: "扣款账户必须选择", trigger: "blur"}],
             type: [{required: true, message: "分类必须选择", trigger: "blur"}],
             payTime: [{required: true, message: "消费日期不能为空", trigger: "blur"}],
             flow: [{required: true, message: "资金流向必须选择", trigger: "blur"}],
@@ -422,9 +444,12 @@
         });
     }
 
-    function getUserSelect() {
+    function initSelect() {
         selectUser().then(response => {
             userSelect.value = response.data;
+        })
+        selectAccount().then(response => {
+            accountSelect.value = response.data;
         })
     }
 
@@ -447,9 +472,10 @@
             amount: undefined,
             payTime: new Date(),
             flow: 2,
-            userName: undefined,
+            userName: userSelect.value[2].name,
+            accountId: accountSelect.value[0].id,
         };
-        getUserSelect();
+        initSelect();
         proxy.resetForm("billRef");
     }
 
@@ -604,7 +630,7 @@
         queryParams.value.isAsc = defaultSort.value.order;
         getList();
         handelStatsBill();
-        getUserSelect();
+        initSelect();
     });
 
 </script>
