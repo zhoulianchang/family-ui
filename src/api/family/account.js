@@ -9,7 +9,7 @@ export function listAccount(query) {
   })
 }
 
-// 查询列表
+// 查询下拉框
 export function selectAccount(query) {
   return request({
     url: '/family/account/select',
@@ -26,6 +26,13 @@ export function getAccount(id) {
   })
 }
 
+// 初始化余额
+export function resetBalance() {
+  return request({
+    url: '/family/account/reset/balance',
+    method: 'put'
+  })
+}
 // 新增
 export function addAccount(data) {
   return request({

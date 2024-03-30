@@ -28,10 +28,10 @@
             </el-form-item>
         </el-form>
         <el-row>
-            <el-col :span="12">
+            <el-col :span="24">
                 <div ref="outPieChart" style="height: 400px;"></div>
             </el-col>
-            <el-col :span="12">
+            <el-col :span="24">
                 <div ref="outBarChart" style="height: 400px;"></div>
             </el-col>
         </el-row>
@@ -52,7 +52,7 @@
         queryParams: {},
         outPieOption: {
             title: {
-                text: '支出占比',
+                text: '分类支出占比',
                 subtext: '',
                 x: 'center'
             },

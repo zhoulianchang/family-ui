@@ -33,6 +33,16 @@
                 >删除
                 </el-button>
             </el-col>
+            <el-col :span="1.5">
+                <el-button
+                        type="warn"
+                        plain
+                        icon="Refresh"
+                        @click="handleReset"
+                        v-hasPermi="['family:account:list']"
+                >重置账户余额
+                </el-button>
+            </el-col>
             <right-toolbar @queryTable="getList" :search="false"></right-toolbar>
         </el-row>
 
@@ -141,7 +151,7 @@
 </template>
 
 <script setup name="Account">
-    import {listAccount, addAccount, delAccount, getAccount, updateAccount} from "@/api/family/account";
+    import {listAccount, addAccount, delAccount, getAccount, updateAccount, resetBalance} from "@/api/family/account";
     import {selectUser} from "@/api/system/user";
     import {onMounted} from 'vue'
 
@@ -257,6 +267,13 @@
             proxy.$modal.msgSuccess("删除成功");
         }).catch(() => {
         });
+    }
+
+    function handleReset() {
+        resetBalance().then(response => {
+            proxy.$modal.msgSuccess("初始化成功");
+            getList();
+        })
     }
 
     onMounted(() => {
