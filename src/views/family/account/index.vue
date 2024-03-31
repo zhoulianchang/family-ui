@@ -265,6 +265,7 @@
     }
 
     function handleReset() {
+        loading.value = true;
         resetBalance().then(response => {
             proxy.$modal.msgSuccess("初始化成功");
             getList();

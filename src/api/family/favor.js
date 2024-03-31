@@ -8,6 +8,14 @@ export function listFavor(query) {
     params: query
   })
 }
+// 查询人情账薄列表
+export function statsFavorAmount(query) {
+  return request({
+    url: '/family/favor/stats/amount',
+    method: 'get',
+    params: query
+  })
+}
 
 // 查询人情账薄详细
 export function getFavor(favorId) {

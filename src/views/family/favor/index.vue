@@ -11,8 +11,21 @@
                     />
                 </el-select>
             </el-form-item>
+            <el-form-item label="资金流向" prop="flow">
+                <el-select v-model="queryParams.flow" placeholder="请选择" clearable>
+                    <el-option
+                            v-for="dict in bill_flow"
+                            :key="dict.value"
+                            :label="dict.label"
+                            :value="parseInt(dict.value)"
+                    />
+                </el-select>
+            </el-form-item>
             <el-form-item label="礼金人" prop="userNameLike">
                 <el-input v-model="queryParams.userNameLike" placeholder="请输入礼金人名称"></el-input>
+            </el-form-item>
+            <el-form-item label="备注" prop="remarkLike">
+                <el-input v-model="queryParams.remarkLike" placeholder="请输入备注信息"></el-input>
             </el-form-item>
             <el-form-item label="人情日期" style="width: 308px">
                 <el-date-picker
@@ -89,14 +102,16 @@
         <el-table v-loading="loading" :data="favorList" @selection-change="handleSelectionChange"
                   :default-sort="defaultSort" @sort-change="handleSortChange">
             <el-table-column type="selection" width="55" align="center"/>
-            <el-table-column label="人情编号" align="center" prop="favorId" :show-overflow-tooltip="true" width="100" sortable="custom"
+            <el-table-column label="人情编号" align="center" prop="favorId" :show-overflow-tooltip="true" width="100"
+                             sortable="custom"
                              :sort-orders="['descending', 'ascending']"/>
             <el-table-column label="关联人情编号" align="center" prop="relationId" :show-overflow-tooltip="true" width="120">
                 <template #default="scope">
                     <span>{{scope.row.relationId?scope.row.relationId:"-"}}</span>
                 </template>
             </el-table-column>
-            <el-table-column label="礼金人" align="center" prop="userName" :show-overflow-tooltip="true" width="120" sortable="custom"
+            <el-table-column label="礼金人" align="center" prop="userName" :show-overflow-tooltip="true" width="120"
+                             sortable="custom"
                              :sort-orders="['descending', 'ascending']"/>
             <el-table-column label="人情日期" align="center" prop="favorTime" width="200" sortable="custom"
                              :sort-orders="['descending', 'ascending']">
@@ -104,7 +119,8 @@
                     <span>{{ parseTime(scope.row.favorTime, '{y}-{m}-{d}') }}</span>
                 </template>
             </el-table-column>
-            <el-table-column label="礼金金额" align="center" prop="amount" :show-overflow-tooltip="true" width="100" sortable="custom"
+            <el-table-column label="礼金金额" align="center" prop="amount" :show-overflow-tooltip="true" width="100"
+                             sortable="custom"
                              :sort-orders="['descending', 'ascending']">
                 <template #default="scope">
                     <span>{{scope.row.amount}}元</span>
@@ -132,7 +148,16 @@
                 </template>
             </el-table-column>
         </el-table>
-
+<el-row>
+    <el-col :span="3">
+        <div style="margin-top: 20px">
+            <el-text style="font-size: 14px">
+                <el-icon><Money /></el-icon>
+                总额：{{totalAmount}}元
+            </el-text>
+        </div>
+    </el-col>
+    <el-col :span="21">
         <pagination
                 v-show="total > 0"
                 :total="total"
@@ -140,6 +165,9 @@
                 v-model:limit="queryParams.pageSize"
                 @pagination="getList"
         />
+    </el-col>
+</el-row>
+
 
         <!-- 添加或修改人情账薄对话框 -->
         <el-dialog :title="title" v-model="open" width="400px" append-to-body>
@@ -238,7 +266,7 @@
 </template>
 
 <script setup name="Favor">
-    import {listFavor, addFavor, delFavor, getFavor, updateFavor} from "@/api/family/favor";
+    import {listFavor, addFavor, delFavor, getFavor, updateFavor, statsFavorAmount} from "@/api/family/favor";
     import {getToken} from "@/utils/auth";
     import {onMounted} from 'vue'
 
@@ -254,6 +282,7 @@
     const single = ref(true);
     const multiple = ref(true);
     const total = ref(0);
+    const totalAmount = ref(0);
     const title = ref("");
     const defaultSort = ref({prop: "favorId", order: "descending"});
     const shortcuts = ref([
@@ -315,6 +344,9 @@
             favorList.value = response.rows;
             total.value = response.total;
             loading.value = false;
+        });
+        statsFavorAmount(proxy.addDateRange(queryParams.value, dateRange.value)).then(response => {
+            totalAmount.value = response.data;
         });
     }
 
