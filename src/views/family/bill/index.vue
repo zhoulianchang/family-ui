@@ -3,7 +3,7 @@
         <el-row style="margin-bottom: 20px">
             <el-col :span="11" style="margin-right: 10px">
                 <div class="statistic-card-income">
-                    <el-statistic :value="stats.in" precision="2">
+                    <el-statistic :value="stats.in" :precision="2">
                         <template #title>
                             <div class="card-font">收入合计</div>
                         </template>
@@ -12,7 +12,7 @@
             </el-col>
             <el-col :span="11">
                 <div class="statistic-card-expend">
-                    <el-statistic :value="stats.out" precision="2">
+                    <el-statistic :value="stats.out" :precision="2">
                         <template #title>
                             <div class="card-font">支出合计</div>
                         </template>
@@ -22,8 +22,8 @@
         </el-row>
 
         <el-form :model="queryParams" ref="queryRef" :inline="true" v-show="showSearch">
-            <el-form-item label="消费用户" prop="userName">
-                <el-select v-model="queryParams.userName" placeholder="请选择消费用户" clearable>
+            <el-form-item label="用户" prop="userName">
+                <el-select v-model="queryParams.userName" placeholder="请选择用户" clearable>
                     <el-option
                             v-for="dict in userSelect"
                             :key="dict.id"
@@ -52,7 +52,7 @@
                     />
                 </el-select>
             </el-form-item>
-            <el-form-item label="消费日期" style="width: 308px">
+            <el-form-item label="账单日期" style="width: 308px">
                 <el-date-picker
                         v-model="dateRange"
                         value-format="YYYY-MM-DD"
@@ -128,15 +128,15 @@
             <el-table-column type="selection" width="55" align="center"/>
             <el-table-column label="账单编号" align="center" prop="billId" :show-overflow-tooltip="true" width="100" sortable="custom"
                              :sort-orders="['descending', 'ascending']"/>
-            <el-table-column label="消费用户" align="center" prop="userName" :show-overflow-tooltip="true" width="120" sortable="custom"
+            <el-table-column label="用户" align="center" prop="userName" :show-overflow-tooltip="true" width="120" sortable="custom"
                              :sort-orders="['descending', 'ascending']"/>
-            <el-table-column label="消费日期" align="center" prop="payTime" width="200" sortable="custom"
+            <el-table-column label="账单日期" align="center" prop="payTime" width="200" sortable="custom"
                              :sort-orders="['descending', 'ascending']">
                 <template #default="scope">
                     <span>{{ parseTime(scope.row.payTime, '{y}-{m}-{d}') }}</span>
                 </template>
             </el-table-column>
-            <el-table-column label="消费金额" align="center" prop="amount" :show-overflow-tooltip="true" width="100" sortable="custom"
+            <el-table-column label="金额" align="center" prop="amount" :show-overflow-tooltip="true" width="100" sortable="custom"
                              :sort-orders="['descending', 'ascending']"/>
             <el-table-column label="分类" align="center" prop="type" width="100">
                 <template #default="scope">
@@ -175,8 +175,8 @@
         <!-- 添加或修改账单对话框 -->
         <el-dialog :title="title" v-model="open" width="500px" append-to-body>
             <el-form ref="billRef" :model="form" :rules="rules" label-width="110px">
-                <el-form-item label="消费用户" prop="userName">
-                    <el-select v-model="form.userName" placeholder="请选择消费用户" clearable>
+                <el-form-item label="用户" prop="userName">
+                    <el-select v-model="form.userName" placeholder="请选择用户" clearable>
                         <el-option
                                 v-for="dict in userSelect"
                                 :key="dict.id"
@@ -185,8 +185,8 @@
                         />
                     </el-select>
                 </el-form-item>
-                <el-form-item label="扣款账户" prop="accountId">
-                    <el-select v-model="form.accountId" placeholder="请选择扣款账户" clearable>
+                <el-form-item label="账户" prop="accountId">
+                    <el-select v-model="form.accountId" placeholder="请选择账户" clearable>
                         <el-option
                                 v-for="dict in accountSelect"
                                 :key="dict.id"
@@ -195,15 +195,15 @@
                         />
                     </el-select>
                 </el-form-item>
-                <el-form-item label="消费日期" prop="payTime">
+                <el-form-item label="账单日期" prop="payTime">
                     <el-date-picker
                             v-model="form.payTime"
                             type="date"
-                            placeholder="请选择一个消费日期"
+                            placeholder="请选择一个账单日期"
                             :shortcuts="shortcuts"
                     />
                 </el-form-item>
-                <el-form-item label="消费金额" prop="amount">
+                <el-form-item label="金额" prop="amount">
                     <el-input-number style="margin-right: 10px" v-model="form.amount" :precision="2" :step="1"
                                      :min="0"/>
                     元
@@ -247,24 +247,24 @@
             <el-form :disabled="true" :model="form">
                 <el-row>
                     <el-col :span="12">
-                        <el-form-item label="消费用户" prop="userName">
+                        <el-form-item label="用户" prop="userName">
                             {{form.userName?form.userName:"-"}}
                         </el-form-item>
                     </el-col>
                     <el-col :span="12">
-                        <el-form-item label="扣款账户" prop="accountName">
+                        <el-form-item label="账户" prop="accountName">
                             {{form.accountName}}
                         </el-form-item>
                     </el-col>
                 </el-row>
                 <el-row>
                     <el-col :span="12">
-                        <el-form-item label="消费日期" prop="payTime">
+                        <el-form-item label="账单日期" prop="payTime">
                             {{ parseTime(form.payTime, '{y}-{m}-{d}') }}
                         </el-form-item>
                     </el-col>
                     <el-col :span="12">
-                        <el-form-item label="消费金额" prop="amount">
+                        <el-form-item label="金额" prop="amount">
                             {{form.amount}} 元
                         </el-form-item>
                     </el-col>
@@ -420,10 +420,10 @@
             status: undefined
         },
         rules: {
-            amount: [{required: true, message: "消费金额不能为空", trigger: "blur"}],
-            accountId: [{required: true, message: "扣款账户必须选择", trigger: "blur"}],
+            amount: [{required: true, message: "金额不能为空", trigger: "blur"}],
+            accountId: [{required: true, message: "账户必须选择", trigger: "blur"}],
             type: [{required: true, message: "分类必须选择", trigger: "blur"}],
-            payTime: [{required: true, message: "消费日期不能为空", trigger: "blur"}],
+            payTime: [{required: true, message: "账单日期不能为空", trigger: "blur"}],
             flow: [{required: true, message: "资金流向必须选择", trigger: "blur"}],
         },
         stats: {
