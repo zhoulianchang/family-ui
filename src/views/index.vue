@@ -28,8 +28,11 @@
             </el-form-item>
         </el-form>
         <el-row>
-            <el-col :span="24">
+            <el-col :span="12">
                 <div ref="outPieChart" style="height: 400px;"></div>
+            </el-col>
+            <el-col :span="12">
+                <div ref="userOutPieChart" style="height: 400px;"></div>
             </el-col>
             <el-col :span="24">
                 <div ref="outBarChart" style="height: 400px;"></div>
@@ -39,15 +42,21 @@
 </template>
 
 <script setup name="Index">
-    import {statsBillByType, getAccountBalance} from "@/api/index";
+    import {statsBillByType,statsBillByUser, getAccountBalance} from "@/api/index";
     import * as echarts from 'echarts';
     import {onMounted, ref} from 'vue';
+    import {parseTime} from "../utils/family";
 
     const {proxy} = getCurrentInstance();
-    const dateRange = ref([]);
+    const now = ref(new Date());
+    const dateRange = ref([
+        parseTime(new Date(now.value.getFullYear(), now.value.getMonth(), 1)),
+        parseTime(new Date(now.value.getFullYear(), now.value.getMonth() + 1, 0),'{y}-{m}-{d}')
+    ]);
     const balance = ref(undefined);
     const outBarChart = ref(null);
     const outPieChart = ref(null);
+    const userOutPieChart = ref(null);
     const data = reactive({
         queryParams: {},
         outPieOption: {
@@ -67,6 +76,36 @@
             series: [
                 {
                     name: '分类',
+                    type: 'pie',
+                    radius: '55%',
+                    center: ['50%', '60%'],
+                    emphasis: {
+                        itemStyle: {
+                            shadowBlur: 10,
+                            shadowOffsetX: 0,
+                            shadowColor: 'rgba(0, 0, 0, 0.5)'
+                        }
+                    }
+                }
+            ]
+        },
+        userOutPieOption: {
+            title: {
+                text: '消费用户支出占比',
+                subtext: '',
+                x: 'center'
+            },
+            tooltip: {
+                trigger: 'item',
+                formatter: '{a} <br/>{b} : {c} ({d}%)'
+            },
+            legend: {
+                orient: 'vertical',
+                left: 'left',
+            },
+            series: [
+                {
+                    name: '用户名',
                     type: 'pie',
                     radius: '55%',
                     center: ['50%', '60%'],
@@ -119,7 +158,7 @@
             ]
         }
     });
-    const {queryParams, outPieOption, outBarOption} = toRefs(data);
+    const {queryParams, outPieOption,userOutPieOption, outBarOption} = toRefs(data);
     onMounted(() => {
         handleInitData();
     });
@@ -133,6 +172,11 @@
             outBarOption.value.series[0].data = outBarData.map(item => item.value);
             echarts.init(outPieChart.value).setOption(outPieOption.value);
             echarts.init(outBarChart.value).setOption(outBarOption.value);
+        });
+        statsBillByUser(proxy.addDateRange(queryParams.value, dateRange.value)).then(response => {
+            userOutPieOption.value.legend.data = response.data.map(item => item.name);
+            userOutPieOption.value.series[0].data = response.data;
+            echarts.init(userOutPieChart.value).setOption(userOutPieOption.value);
         });
         getAccountBalance().then(response => {
             balance.value = response.data;

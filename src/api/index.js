@@ -8,6 +8,15 @@ export function statsBillByType(query) {
     params: query
   })
 }
+
+// 根据消费用户统计支出账单
+export function statsBillByUser(query) {
+  return request({
+    url: '/index/stats/bill/by/user',
+    method: 'get',
+    params: query
+  })
+}
 // 查询账户余额
 export function getAccountBalance() {
   return request({

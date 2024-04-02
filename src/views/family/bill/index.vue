@@ -365,13 +365,18 @@
     import {selectAccount} from "@/api/family/account";
     import {getToken} from "@/utils/auth";
     import {onMounted} from 'vue'
+    import {parseTime} from "../../../utils/family";
     const {proxy} = getCurrentInstance();
     const {bill_type, bill_flow} = proxy.useDict("bill_type", "bill_flow");
 
     const billList = ref([]);
     const userSelect = ref([]);
     const accountSelect = ref([]);
-    const dateRange = ref([]);
+    const now = ref(new Date());
+    const dateRange = ref([
+        parseTime(new Date(now.value.getFullYear(), now.value.getMonth(), 1)),
+        parseTime(new Date(now.value.getFullYear(), now.value.getMonth() + 1, 0),'{y}-{m}-{d}')
+    ]);
     const open = ref(false);
     const viewOpen = ref(false);
     const loading = ref(true);
