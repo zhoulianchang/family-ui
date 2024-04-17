@@ -65,7 +65,7 @@
         </el-form>
         <!--  底部  -->
         <div class="el-login-footer">
-            <span>Copyright © 2018-2024 zhoulianchang All Rights Reserved.</span>
+            <a href="https://beian.miit.gov.cn">浙ICP备2024084616号-2</a>
         </div>
     </div>
 </template>
