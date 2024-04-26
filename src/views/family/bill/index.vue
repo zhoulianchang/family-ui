@@ -124,11 +124,14 @@
             <right-toolbar v-model:showSearch="showSearch" @queryTable="getList"></right-toolbar>
         </el-row>
 
-        <el-table ref="billTableRef" v-loading="loading" :data="billList" @selection-change="handleSelectionChange" :default-sort="defaultSort" @sort-change="handleSortChange">
+        <el-table ref="billTableRef" v-loading="loading" :data="billList" @selection-change="handleSelectionChange"
+                  :default-sort="defaultSort" @sort-change="handleSortChange">
             <el-table-column type="selection" width="55" align="center"/>
-            <el-table-column label="账单编号" align="center" prop="billId" :show-overflow-tooltip="true" width="100" sortable="custom"
+            <el-table-column label="账单编号" align="center" prop="billId" :show-overflow-tooltip="true" width="100"
+                             sortable="custom"
                              :sort-orders="['descending', 'ascending']"/>
-            <el-table-column label="用户" align="center" prop="userName" :show-overflow-tooltip="true" width="120" sortable="custom"
+            <el-table-column label="用户" align="center" prop="userName" :show-overflow-tooltip="true" width="120"
+                             sortable="custom"
                              :sort-orders="['descending', 'ascending']"/>
             <el-table-column label="账单日期" align="center" prop="payTime" width="200" sortable="custom"
                              :sort-orders="['descending', 'ascending']">
@@ -136,7 +139,8 @@
                     <span>{{ parseTime(scope.row.payTime, '{y}-{m}-{d}') }}</span>
                 </template>
             </el-table-column>
-            <el-table-column label="金额" align="center" prop="amount" :show-overflow-tooltip="true" width="100" sortable="custom"
+            <el-table-column label="金额" align="center" prop="amount" :show-overflow-tooltip="true" width="100"
+                             sortable="custom"
                              :sort-orders="['descending', 'ascending']"/>
             <el-table-column label="分类" align="center" prop="type" width="100">
                 <template #default="scope">
@@ -366,6 +370,7 @@
     import {getToken} from "@/utils/auth";
     import {onMounted} from 'vue'
     import {parseTime} from "../../../utils/family";
+
     const {proxy} = getCurrentInstance();
     const {bill_type, bill_flow} = proxy.useDict("bill_type", "bill_flow");
 
@@ -375,7 +380,7 @@
     const now = ref(new Date());
     const dateRange = ref([
         parseTime(new Date(now.value.getFullYear(), now.value.getMonth(), 1)),
-        parseTime(new Date(now.value.getFullYear(), now.value.getMonth() + 1, 0),'{y}-{m}-{d}')
+        parseTime(new Date(now.value.getFullYear(), now.value.getMonth() + 1, 0), '{y}-{m}-{d}')
     ]);
     const open = ref(false);
     const viewOpen = ref(false);
@@ -477,8 +482,8 @@
             amount: undefined,
             payTime: new Date(),
             flow: 2,
-            userName: userSelect.value[2].name,
-            accountId: accountSelect.value[0].id,
+            userName: userSelect.value && userSelect.value[1] ? userSelect.value[1].name : undefined,
+            accountId: accountSelect.value ? accountSelect.value[0].id : undefined,
         };
         initSelect();
         proxy.resetForm("billRef");
@@ -630,6 +635,7 @@
             title.value = "查看账单";
         });
     }
+
     onMounted(() => {
         queryParams.value.orderByColumn = defaultSort.value.prop;
         queryParams.value.isAsc = defaultSort.value.order;

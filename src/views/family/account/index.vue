@@ -39,7 +39,7 @@
                         plain
                         icon="Refresh"
                         @click="handleReset"
-                        v-hasPermi="['family:account:list']"
+                        v-hasPermi="['family:account:edit']"
                 >重置账户余额
                 </el-button>
             </el-col>
@@ -180,7 +180,7 @@
     /** 查询列表 */
     function getList() {
         loading.value = true;
-        listAccount().then(response => {
+        listAccount(queryParams.value).then(response => {
             accountList.value = response.rows;
             total.value = response.total;
             loading.value = false;
