@@ -32,6 +32,16 @@
                     />
                 </el-select>
             </el-form-item>
+            <el-form-item label="账户" prop="accountId">
+                <el-select v-model="queryParams.accountId" placeholder="请选择扣款账户" clearable>
+                    <el-option
+                            v-for="dict in accountSelect"
+                            :key="dict.id"
+                            :label="dict.name"
+                            :value="dict.id"
+                    />
+                </el-select>
+            </el-form-item>
             <el-form-item label="分类" prop="type">
                 <el-select v-model="queryParams.type" placeholder="请选择账单分类" clearable>
                     <el-option
@@ -142,6 +152,7 @@
             <el-table-column label="金额" align="center" prop="amount" :show-overflow-tooltip="true" width="100"
                              sortable="custom"
                              :sort-orders="['descending', 'ascending']"/>
+            <el-table-column label="扣款账户" align="center" prop="accountName" :show-overflow-tooltip="true" width="120"/>
             <el-table-column label="分类" align="center" prop="type" width="100">
                 <template #default="scope">
                     <dict-tag :options="bill_type" :value="scope.row.type"/>
@@ -256,7 +267,7 @@
                         </el-form-item>
                     </el-col>
                     <el-col :span="12">
-                        <el-form-item label="账户" prop="accountName">
+                        <el-form-item label="扣款账户" prop="accountName">
                             {{form.accountName}}
                         </el-form-item>
                     </el-col>
