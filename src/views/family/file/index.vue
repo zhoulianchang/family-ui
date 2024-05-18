@@ -49,6 +49,7 @@
                      :key="file.fileId"
                      :isSelected="selectedFiles.includes(file.fileId)"
                      @update:selected="toggleFileSelection(file.fileId)"
+                     @update:label="(newLabel) => { fileNameUpdate(newLabel, file) }"
                      @svgClick="handleSvgClick(file)"
                      style="margin-right: 40px"/>
         </div>
@@ -59,7 +60,7 @@
                 v-model:limit="queryParams.pageSize"
                 @pagination="getList"
         />
-        <!-- 添加或修改人情账薄对话框 -->
+        <!-- 添加文件对话框 -->
         <el-dialog :title="title" v-model="open" width="400px" append-to-body>
             <el-form ref="fileRef" :model="form" :rules="rules" label-width="100px">
                 <el-form-item label="文件类型" prop="fileType">
@@ -92,15 +93,29 @@
                     </el-upload>
                     <div style="width: 100%"><span>{{uploadFileName?'已选择文件：'+uploadFileName:''}}</span></div>
                 </el-form-item>
-
-                <el-form-item label="备注" prop="remark">
-                    <el-input v-model="form.remark" type="textarea" placeholder="请输入内容" style="width: 220px"/>
-                </el-form-item>
             </el-form>
             <template #footer>
                 <div class="dialog-footer">
                     <el-button type="primary" @click="submitForm">确 定</el-button>
                     <el-button @click="cancel">取 消</el-button>
+                </div>
+            </template>
+        </el-dialog>
+
+        <el-dialog :title="title" v-model="previewOpen" width="50%" append-to-body>
+            <div style="display: grid; place-items: center;">
+                <ImagePreview width="100%" height="500px" v-if="previewFileType === 'image'"
+                              :src="previewFileUrl"></ImagePreview>
+                <video v-if="previewFileType === 'video'" style="width:100%;height:600px" controls>
+                    <source :src="previewFileUrl" type="video/mp4">
+                </video>
+            </div>
+            <el-progress v-if="previewFileType === undefined"
+                         :percentage="downProgress"
+                         :color="downProgressColors"></el-progress>
+            <template #footer>
+                <div class="dialog-footer">
+                    <el-button @click="cancelView">关闭</el-button>
                 </div>
             </template>
         </el-dialog>
@@ -119,6 +134,18 @@
     const curBreadId = ref(undefined);
     const selectAll = ref(false);
     const open = ref(false);
+    const previewOpen = ref(false);
+    const previewFileType = ref("");
+    const previewFileUrl = ref("");
+    const downProgress = ref(undefined);
+    const downFileName = ref("");
+    const downProgressColors = ref([
+        {color: '#f56c6c', percentage: 20},
+        {color: '#e6a23c', percentage: 40},
+        {color: '#5cb87a', percentage: 60},
+        {color: '#6f7ad3', percentage: 80},
+        {color: '#1989fa', percentage: 100},
+    ])
     const title = ref("");
     const uploadFileName = ref("");
     const fileOptions = ref(undefined);
@@ -147,6 +174,7 @@
 
     /** 查询列表 */
     function getList() {
+        selectedFiles.value = [];
         loading.value = true;
         listFile(proxy.addDateRange(queryParams.value, dateRange.value)).then(response => {
             fileList.value = response.rows;
@@ -180,8 +208,8 @@
             mp4: "file_video"
         };
 
-        const fileExtType = file.fileExt?.fileType;
-        return extensionIconMap[fileExtType] || "file_unknown";
+        const fileSuffix = file.fileExt?.fileType;
+        return extensionIconMap[fileSuffix] || "file_unknown";
     }
 
     /**
@@ -209,6 +237,22 @@
         }
     }
 
+    /**
+     * 文件名称修改
+     *
+     */
+    function fileNameUpdate(newDirName, file) {
+        if (file.type === 'DIR') {
+            file.name = newDirName;
+            updateFile(file).then(response => {
+                proxy.$modal.msgSuccess("修改成功");
+                getList();
+            });
+        } else {
+            proxy.$modal.msgError("仅支持修改文件夹名称");
+        }
+    }
+
     function handleSvgClick(file) {
         if (file.type === 'DIR') {
             //    如果是文件夹类型则请求接口刷新
@@ -222,7 +266,57 @@
             curBreadId.value = file.fileId === 0 ? undefined : file.fileId;
             getList();
         } else {
-            // 预览文件
+            previewFileUrl.value = file.fileExt.filePath;
+            switch (file.fileExt?.fileType) {
+                case 'png':
+                case 'jpg':
+                case 'jpeg':
+                    previewFileType.value = 'image';
+                    break;
+                case 'mp4':
+                    previewFileType.value = 'video';
+                    break;
+                default:
+                    previewFileType.value = undefined;
+                    break;
+            }
+            if (previewFileType.value) {
+                // 预览文件
+                previewOpen.value = true;
+                title.value = '文件预览';
+            } else {
+                previewOpen.value = true;
+                title.value = '文件下载框';
+                downFileName.value = file.name;
+                // 如果文件格式不支持那么直接下载文件
+                const xhr = new XMLHttpRequest();
+                xhr.open('GET', previewFileUrl.value, true);
+                xhr.responseType = 'blob'; // 将响应类型设置为 Blob 对象，以便处理二进制数据
+                xhr.onprogress = this.updateProgress;
+                xhr.onload = this.handleLoad;
+                xhr.send();
+            }
+        }
+    }
+
+    function updateProgress(event) {
+        if (event.lengthComputable) {
+            const percentage = (event.loaded / event.total) * 100;
+            downProgress.value = Math.round(percentage);
+        }
+    }
+
+    function handleLoad(event) {
+        const xhr = event.target;
+        if (xhr.status === 200) {
+            const blob = xhr.response;
+            // 创建一个a元素用于下载
+            const link = document.createElement('a');
+            link.href = window.URL.createObjectURL(blob);
+            link.download = downFileName.value;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
         }
     }
 
@@ -246,6 +340,7 @@
             type: 'DIR',
             parentId: curBreadId.value
         };
+        uploadFileName.value = "";
         proxy.resetForm("fileRef");
         getFileTree();
     }
@@ -270,7 +365,13 @@
     /** 取消弹窗按钮 */
     function cancel() {
         open.value = false;
+        previewOpen.value = false;
         reset();
+    }
+
+    /** 取消弹窗按钮 */
+    function cancelView() {
+        previewOpen.value = false;
     }
 
 
@@ -278,19 +379,11 @@
     function submitForm() {
         proxy.$refs["fileRef"].validate(valid => {
             if (valid) {
-                if (form.value.fileId != undefined) {
-                    updateFile(form.value).then(response => {
-                        proxy.$modal.msgSuccess("修改成功");
-                        open.value = false;
-                        getList();
-                    });
-                } else {
-                    addFile(form.value).then(response => {
-                        proxy.$modal.msgSuccess("新增成功");
-                        open.value = false;
-                        getList();
-                    });
-                }
+                addFile(form.value).then(response => {
+                    proxy.$modal.msgSuccess("新增成功");
+                    open.value = false;
+                    getList();
+                });
             }
         });
     }
