@@ -20,6 +20,7 @@ import {download} from '@/utils/request'
 // svg图标
 import 'virtual:svg-icons-register'
 import SvgIcon from '@/components/SvgIcon'
+import File from '@/components/File'
 import elementIcons from '@/components/SvgIcon/svgicon'
 
 // 动态菜单相关的代码都在这个里面
@@ -72,6 +73,7 @@ app.use(store)
 app.use(plugins)
 app.use(elementIcons)
 app.component('svg-icon', SvgIcon)
+app.component('my-file', File)
 
 directive(app)
 

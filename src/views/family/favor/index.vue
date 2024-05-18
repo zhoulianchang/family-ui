@@ -148,25 +148,27 @@
                 </template>
             </el-table-column>
         </el-table>
-<el-row>
-    <el-col :span="3">
-        <div style="margin-top: 20px">
-            <el-text style="font-size: 14px">
-                <el-icon><Money /></el-icon>
-                总额：{{totalAmount}}元
-            </el-text>
-        </div>
-    </el-col>
-    <el-col :span="21">
-        <pagination
-                v-show="total > 0"
-                :total="total"
-                v-model:page="queryParams.pageNum"
-                v-model:limit="queryParams.pageSize"
-                @pagination="getList"
-        />
-    </el-col>
-</el-row>
+        <el-row>
+            <el-col :span="3">
+                <div style="margin-top: 20px">
+                    <el-text style="font-size: 14px">
+                        <el-icon>
+                            <Money/>
+                        </el-icon>
+                        总额：{{totalAmount}}元
+                    </el-text>
+                </div>
+            </el-col>
+            <el-col :span="21">
+                <pagination
+                        v-show="total > 0"
+                        :total="total"
+                        v-model:page="queryParams.pageNum"
+                        v-model:limit="queryParams.pageSize"
+                        @pagination="getList"
+                />
+            </el-col>
+        </el-row>
 
 
         <!-- 添加或修改人情账薄对话框 -->
