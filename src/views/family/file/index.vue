@@ -45,6 +45,7 @@
             </div>
             <my-file :iconName="getIconName(file)"
                      :label="file.name"
+                     :fileInfo="file"
                      v-for="file in fileList"
                      :key="file.fileId"
                      :isSelected="selectedFiles.includes(file.fileId)"
@@ -84,14 +85,14 @@
                             check-strictly
                     />
                 </el-form-item>
-                <el-form-item v-if="form.type === 'DIR'" label="文件夹名称" prop="name">
-                    <el-input v-model="form.name" placeholder="请输入文件夹名称" style="width: 220px"></el-input>
+                <el-form-item label="文件名称" prop="name">
+                    <el-input v-model="form.name" placeholder="请输入文件名称" style="width: 220px"></el-input>
                 </el-form-item>
                 <el-form-item v-if="form.type === 'FILE'" prop="realFile">
                     <el-upload :before-upload="beforeUpload" :on-change="handleChange">
                         <el-button type="primary">点击选择文件</el-button>
                     </el-upload>
-                    <div style="width: 100%"><span>{{uploadFileName?'已选择文件：'+uploadFileName:''}}</span></div>
+                    <div style="width: 100%"><span>{{selectFileName?'已选择文件：'+selectFileName:''}}</span></div>
                 </el-form-item>
             </el-form>
             <template #footer>
@@ -104,20 +105,18 @@
 
         <el-dialog :title="title" v-model="previewOpen" width="50%" append-to-body>
             <div style="display: grid; place-items: center;">
-                <ImagePreview width="100%" height="500px" v-if="previewFileType === 'image'"
+                <ImagePreview width="90%" height="500px" v-if="previewFileType === 'image'"
                               :src="previewFileUrl"></ImagePreview>
-                <video v-if="previewFileType === 'video'" style="width:100%;height:600px" controls>
+                <video v-if="previewFileType === 'video'" style="width:90%;height:500px" controls>
                     <source :src="previewFileUrl" type="video/mp4">
                 </video>
+                <iframe v-if="previewFileType === 'iframe'" style="width:90%;height:700px"
+                        :src="previewFileUrl">
+                </iframe>
             </div>
             <el-progress v-if="previewFileType === undefined"
                          :percentage="downProgress"
                          :color="downProgressColors"></el-progress>
-            <template #footer>
-                <div class="dialog-footer">
-                    <el-button @click="cancelView">关闭</el-button>
-                </div>
-            </template>
         </el-dialog>
     </div>
 </template>
@@ -147,7 +146,7 @@
         {color: '#1989fa', percentage: 100},
     ])
     const title = ref("");
-    const uploadFileName = ref("");
+    const selectFileName = ref("");
     const fileOptions = ref(undefined);
 
     const data = reactive({
@@ -158,6 +157,7 @@
         // 表单内容规则
         rules: {
             realFile: [{required: true, message: "文件必须选择", trigger: "blur"}],
+            name: [{required: true, message: "文件名称不能为空", trigger: "blur"}],
         },
         // 查询条件 日期和条件
         dateRange: [],
@@ -276,6 +276,9 @@
                 case 'mp4':
                     previewFileType.value = 'video';
                     break;
+                case 'pdf':
+                    previewFileType.value = 'iframe';
+                    break;
                 default:
                     previewFileType.value = undefined;
                     break;
@@ -292,8 +295,11 @@
                 const xhr = new XMLHttpRequest();
                 xhr.open('GET', previewFileUrl.value, true);
                 xhr.responseType = 'blob'; // 将响应类型设置为 Blob 对象，以便处理二进制数据
-                xhr.onprogress = this.updateProgress;
-                xhr.onload = this.handleLoad;
+                xhr.onprogress = updateProgress;
+                xhr.onload = handleLoad;
+                xhr.onerror = function() {
+                    proxy.$modal.msgError("文件下载失败");
+                };
                 xhr.send();
             }
         }
@@ -310,13 +316,14 @@
         const xhr = event.target;
         if (xhr.status === 200) {
             const blob = xhr.response;
-            // 创建一个a元素用于下载
             const link = document.createElement('a');
             link.href = window.URL.createObjectURL(blob);
             link.download = downFileName.value;
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
+        } else {
+            proxy.$modal.msgError("文件下载失败");
         }
     }
 
@@ -340,7 +347,6 @@
             type: 'DIR',
             parentId: curBreadId.value
         };
-        uploadFileName.value = "";
         proxy.resetForm("fileRef");
         getFileTree();
     }
@@ -401,7 +407,8 @@
     }
 
     function handleChange(file, fileList) {
-        uploadFileName.value = file.name;
+        form.value.name = file.name;
+        selectFileName.value = file.name;
     };
     getList();
 </script>
