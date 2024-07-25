@@ -32,6 +32,16 @@
                 >删除
                 </el-button>
             </el-col>
+            <el-col :span="1.5">
+                <el-button
+                        type="primary"
+                        plain
+                        icon="Delete"
+                        @click="handlePrint"
+                        v-hasPermi="['family:file:list']"
+                >打印
+                </el-button>
+            </el-col>
             <right-toolbar @queryTable="getList" :search="false"></right-toolbar>
         </el-row>
         <el-breadcrumb separator=">">
@@ -125,6 +135,7 @@
     import {listFile, addFile, updateFile, delFile, treeFile} from "@/api/family/file";
 
     const {proxy} = getCurrentInstance();
+    const router = useRouter();
     const {file_type, file_save_place} = proxy.useDict("file_type", "file_save_place");
     const loading = ref(true);
     const selectedFiles = ref([]);
@@ -297,7 +308,7 @@
                 xhr.responseType = 'blob'; // 将响应类型设置为 Blob 对象，以便处理二进制数据
                 xhr.onprogress = updateProgress;
                 xhr.onload = handleLoad;
-                xhr.onerror = function() {
+                xhr.onerror = function () {
                     proxy.$modal.msgError("文件下载失败");
                 };
                 xhr.send();
@@ -366,6 +377,10 @@
             proxy.$modal.msgSuccess("删除成功");
         }).catch(() => {
         });
+    }
+
+    function handlePrint() {
+        router.push("/file/print");
     }
 
     /** 取消弹窗按钮 */

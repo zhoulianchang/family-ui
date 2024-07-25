@@ -157,6 +157,34 @@ export const dynamicRoutes = [
                 meta: {title: '修改生成配置', activeMenu: '/tool/gen'}
             }
         ]
+    },
+    {
+        path: '/file/print',
+        component: Layout,
+        hidden: true,
+        permissions: ['family:file:list'],
+        children: [
+            {
+                path: '',
+                component: () => import('@/views/family/file/print'),
+                name: 'FilePrint',
+                meta: {title: '文件打印', activeMenu: '/file'}
+            }
+        ]
+    },
+    {
+        path: '/file/print2',
+        component: Layout,
+        hidden: true,
+        permissions: ['family:file:list'],
+        children: [
+            {
+                path: '',
+                component: () => import('@/views/family/file/print2'),
+                name: 'FilePrint2',
+                meta: {title: '文件打印2', activeMenu: '/file'}
+            }
+        ]
     }
 ]
 

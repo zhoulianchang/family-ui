@@ -45,7 +45,7 @@ import ImagePreview from "@/components/ImagePreview"
 import TreeSelect from '@/components/TreeSelect'
 // 字典标签组件
 import DictTag from '@/components/DictTag'
-
+import Draggable from 'vuedraggable';
 const app = createApp(App)
 
 // 全局方法挂载
@@ -67,6 +67,7 @@ app.component('ImageUpload', ImageUpload)
 app.component('ImagePreview', ImagePreview)
 app.component('RightToolbar', RightToolbar)
 app.component('Editor', Editor)
+app.component('draggable', Draggable)
 
 app.use(router)
 app.use(store)
