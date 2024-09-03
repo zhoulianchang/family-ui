@@ -15,23 +15,26 @@ export default function printHtml(html) {
 // 设置打印样式
 function getStyle() {
     let styleContent = `#print-container {
-    display: none;
-}
-@media print {
-    body > :not(.print-container) {
-        display: none;
-    }
-    @page {
-        margin: 0;
-    }
-    html,
-    body {
-        display: block !important;
-    }
-    #print-container {
-        display: block;
-    }
-}`;
+                            display: none;
+                        }
+                        @media print {
+                            body > :not(.print-container) {
+                                display: none;
+                            }
+                            @page {
+                                margin: 0;
+                                 size: 189px 189px; /* 适用于96 DPI的A4尺寸 */
+                            }
+                            html,
+                            body {
+                                display: block !important;
+                            }
+                            #print-container {
+                                display: block;
+                                transform: scale(1); /* 缩放比例，可以根据需要调整 */
+                                transform-origin: top left; /* 设置缩放原点 */
+                            }
+                        }`;
     let style = document.createElement("style");
     style.innerHTML = styleContent;
     return style;
@@ -51,6 +54,20 @@ function getContainer(html) {
     let container = document.createElement("div");
     container.setAttribute("id", "print-container");
     container.innerHTML = html;
+    return container;
+}
+// 新建DOM，将需要打印的所有内容填充到DOM
+function getBatchContainer(htmlArray) {
+    cleanPrint();
+    let container = document.createElement("div");
+
+    htmlArray.forEach(html => {
+        let pageContainer = document.createElement("div");
+        pageContainer.classList.add("print-container");
+        pageContainer.innerHTML = html;
+        container.appendChild(pageContainer);
+    });
+
     return container;
 }
 

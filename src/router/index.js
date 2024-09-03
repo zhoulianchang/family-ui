@@ -185,6 +185,20 @@ export const dynamicRoutes = [
                 meta: {title: '文件打印2', activeMenu: '/file'}
             }
         ]
+    },
+    {
+        path: '/file/print3',
+        component: Layout,
+        hidden: true,
+        permissions: ['family:file:list'],
+        children: [
+            {
+                path: '',
+                component: () => import('@/views/family/file/print3'),
+                name: 'FilePrint3',
+                meta: {title: '文件打印3', activeMenu: '/file'}
+            }
+        ]
     }
 ]
 

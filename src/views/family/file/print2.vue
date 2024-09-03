@@ -28,7 +28,6 @@
             <el-col :span="2"></el-col>
             <el-col :span="7">
                     <div ref="printTemplate">
-                        <h3>Draggable 2</h3>
                         <draggable
                                 class="dragArea list-group"
                                 :list="list2"
@@ -40,7 +39,7 @@
                             <template #item="{ element }">
                                 <div class="list-group-item">
                                     <el-text v-if="element.type === 'text'">{{ element.name }}</el-text>
-                                    <el-image v-else-if="element.type === 'image'" style="width: 100px; height: 100px" :src="element.url" />
+                                    <el-image v-else-if="element.type === 'image'" style="width: 50px; height: 50px" :src="element.url" />
                                 </div>
                             </template>
                         </draggable>
@@ -106,7 +105,8 @@
         margin-bottom: 0;
         border-radius: .25rem;
         border: 1px solid rgba(0, 0, 0, .125);
-        height: 500px;
+        height: 189px;
+        width: 189px;
     }
     .list-group-item {
         cursor: move;
@@ -114,7 +114,8 @@
         display: block;
         padding: .75rem 1.25rem;
         background-color: #fff;
-        border: 1px solid rgba(0, 0, 0, .125);
+        height: 63px;
+        /*border: 1px solid rgba(0, 0, 0, .125);*/
     }
     .delete-area {
         position: relative;
