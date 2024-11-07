@@ -63,7 +63,7 @@
 					        />
 					    </el-select>
 					</el-form-item>
-					<el-form-item label="备注" prop="remark">
+					<el-form-item label="备注" prop="remarkLike">
 					    <el-input v-model="queryParams.remarkLike" placeholder="请输入备注" clearable>
 					    </el-input>
 					</el-form-item>
@@ -444,10 +444,7 @@
         form: {},
         queryParams: {
             pageNum: 1,
-            pageSize: 10,
-            postCode: undefined,
-            postName: undefined,
-            status: undefined
+            pageSize: 10
         },
         rules: {
             amount: [{required: true, message: "金额不能为空", trigger: "blur"}],
@@ -464,7 +461,7 @@
 
     const {queryParams, form, rules, stats} = toRefs(data);
 
-    /** 查询课程列表 */
+    /** 查询列表 */
     function getList() {
         loading.value = true;
         listBill(proxy.addDateRange(queryParams.value, dateRange.value)).then(response => {
