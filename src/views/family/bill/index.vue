@@ -20,62 +20,71 @@
                 </div>
             </el-col>
         </el-row>
-
         <el-form :model="queryParams" ref="queryRef" :inline="true" v-show="showSearch">
-            <el-form-item label="用户" prop="userName">
-                <el-select v-model="queryParams.userName" placeholder="请选择用户" clearable>
-                    <el-option
-                            v-for="dict in userSelect"
-                            :key="dict.id"
-                            :label="dict.name"
-                            :value="dict.name"
-                    />
-                </el-select>
-            </el-form-item>
-            <el-form-item label="账户" prop="accountId">
-                <el-select v-model="queryParams.accountId" placeholder="请选择扣款账户" clearable>
-                    <el-option
-                            v-for="dict in accountSelect"
-                            :key="dict.id"
-                            :label="dict.name"
-                            :value="dict.id"
-                    />
-                </el-select>
-            </el-form-item>
-            <el-form-item label="分类" prop="type">
-                <el-select v-model="queryParams.type" placeholder="请选择账单分类" clearable>
-                    <el-option
-                            v-for="dict in bill_type"
-                            :key="dict.value"
-                            :label="dict.label"
-                            :value="parseInt(dict.value)"
-                    />
-                </el-select>
-            </el-form-item>
-            <el-form-item label="资金流向" prop="flow">
-                <el-select v-model="queryParams.flow" placeholder="请选择资金流向" clearable>
-                    <el-option
-                            v-for="dict in bill_flow"
-                            :key="dict.value"
-                            :label="dict.label"
-                            :value="parseInt(dict.value)"
-                    />
-                </el-select>
-            </el-form-item>
-            <el-form-item label="账单日期" style="width: 308px">
-                <el-date-picker
-                        v-model="dateRange"
-                        value-format="YYYY-MM-DD"
-                        type="daterange"
-                        range-separator="-"
-                        start-placeholder="开始日期"
-                        end-placeholder="结束日期"
-                ></el-date-picker>
-            </el-form-item>
-            <el-form-item>
-                <el-button type="primary" icon="Search" @click="handleQuery">搜索</el-button>
-                <el-button icon="Refresh" @click="resetQuery">重置</el-button>
-            </el-form-item>
+			<el-row>
+				<el-col :span="24">
+					<el-form-item label="用户" prop="userName">
+					    <el-select v-model="queryParams.userName" placeholder="请选择用户" clearable>
+					        <el-option
+					                v-for="dict in userSelect"
+					                :key="dict.id"
+					                :label="dict.name"
+					                :value="dict.name"
+					        />
+					    </el-select>
+					</el-form-item>
+					<el-form-item label="账户" prop="accountId">
+					    <el-select v-model="queryParams.accountId" placeholder="请选择扣款账户" clearable>
+					        <el-option
+					                v-for="dict in accountSelect"
+					                :key="dict.id"
+					                :label="dict.name"
+					                :value="dict.id"
+					        />
+					    </el-select>
+					</el-form-item>
+					<el-form-item label="分类" prop="type">
+					    <el-select v-model="queryParams.type" placeholder="请选择账单分类" clearable>
+					        <el-option
+					                v-for="dict in bill_type"
+					                :key="dict.value"
+					                :label="dict.label"
+					                :value="parseInt(dict.value)"
+					        />
+					    </el-select>
+					</el-form-item>
+					<el-form-item label="资金流向" prop="flow">
+					    <el-select v-model="queryParams.flow" placeholder="请选择资金流向" clearable>
+					        <el-option
+					                v-for="dict in bill_flow"
+					                :key="dict.value"
+					                :label="dict.label"
+					                :value="parseInt(dict.value)"
+					        />
+					    </el-select>
+					</el-form-item>
+					<el-form-item label="备注" prop="remark">
+					    <el-input v-model="queryParams.remarkLike" placeholder="请输入备注" clearable>
+					    </el-input>
+					</el-form-item>
+				</el-col>
+				<el-col :span="24">
+					<el-form-item label="账单日期" style="width: 308px">
+					    <el-date-picker
+					            v-model="dateRange"
+					            value-format="YYYY-MM-DD"
+					            type="daterange"
+					            range-separator="-"
+					            start-placeholder="开始日期"
+					            end-placeholder="结束日期"
+					    ></el-date-picker>
+					</el-form-item>
+					<el-form-item>
+					    <el-button type="primary" icon="Search" @click="handleQuery">搜索</el-button>
+					    <el-button icon="Refresh" @click="resetQuery">重置</el-button>
+					</el-form-item>
+				</el-col>
+			</el-row>
         </el-form>
 
         <el-row :gutter="10" class="mb8">

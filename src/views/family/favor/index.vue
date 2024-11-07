@@ -155,7 +155,7 @@
                         <el-icon>
                             <Money/>
                         </el-icon>
-                        总额：{{totalAmount}}元
+                        总额：{{totalAmount || 0 }}元
                     </el-text>
                 </div>
             </el-col>
