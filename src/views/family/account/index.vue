@@ -71,6 +71,11 @@
                     {{ userSelectMap[scope.row.userId] }}
                 </template>
             </el-table-column>
+            <el-table-column label="状态" align="center" prop="enabled" width="80">
+                <template #default="scope">
+                    <el-switch v-model="scope.row.enabled" @change="handleEnabled(scope.row)"/>
+                </template>
+            </el-table-column>
             <el-table-column label="备注" align="center" prop="remark" :show-overflow-tooltip="true" width="200"/>
             <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
                 <template #default="scope">
@@ -228,6 +233,14 @@
             form.value = response.data;
             open.value = true;
             title.value = "修改账户";
+        });
+    }
+    /** 修改按钮操作 */
+    function handleEnabled(row) {
+        console.log(row);
+        updateAccount(row).then(response => {
+            proxy.$modal.msgSuccess("修改成功");
+            getList();
         });
     }
 
