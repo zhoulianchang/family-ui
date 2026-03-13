@@ -56,7 +56,7 @@
 					<el-form-item label="资金流向" prop="flow">
 					    <el-select v-model="queryParams.flow" placeholder="请选择资金流向" clearable>
 					        <el-option
-					                v-for="dict in bill_flow"
+					                v-for="dict in sortedBillFlow"
 					                :key="dict.value"
 					                :label="dict.label"
 					                :value="parseInt(dict.value)"
@@ -232,25 +232,30 @@
                                      :min="0"/>
                     元
                 </el-form-item>
-                <el-form-item label="分类" prop="type">
-                    <el-select v-model="form.type" placeholder="请选择账单分类" clearable>
-                        <el-option
-                                v-for="dict in bill_type"
-                                :key="dict.value"
-                                :label="dict.label"
-                                :value="parseInt(dict.value)"
-                        />
-                    </el-select>
-                </el-form-item>
                 <el-form-item label="资金流向" prop="flow">
-                    <el-radio-group v-model="form.flow">
+                    <el-radio-group v-model="form.flow" @change="handleFlowChange">
                         <el-radio
-                                v-for="dict in bill_flow"
+                                v-for="dict in sortedBillFlow"
                                 :key="dict.value"
                                 :label="parseInt(dict.value)"
                         >{{ dict.label }}
                         </el-radio>
                     </el-radio-group>
+                </el-form-item>
+                <el-form-item label="分类" prop="type">
+                    <el-select
+                        v-model="form.type"
+                        :placeholder="typePlaceholder"
+                        :disabled="typeDisabled"
+                        clearable
+                    >
+                        <el-option
+                                v-for="item in filteredBillTypes"
+                                :key="item.code"
+                                :label="item.name"
+                                :value="item.code"
+                        />
+                    </el-select>
                 </el-form-item>
 
                 <el-form-item label="备注" prop="remark">
@@ -384,7 +389,7 @@
 </template>
 
 <script setup name="Bill">
-    import {listBill, statsBill, addBill, delBill, getBill, updateBill} from "@/api/family/bill";
+    import {listBill, statsBill, addBill, delBill, getBill, updateBill, getBillTypes} from "@/api/family/bill";
     import {selectUser} from "@/api/system/user";
     import {selectAccount} from "@/api/family/account";
     import {getToken} from "@/utils/auth";
@@ -394,7 +399,20 @@
     const {proxy} = getCurrentInstance();
     const {bill_type, bill_flow} = proxy.useDict("bill_type", "bill_flow");
 
+    // 资金流向排序：支出(2)在前，收入(1)在后
+    const sortedBillFlow = computed(() => {
+        if (!bill_flow.value || bill_flow.value.length === 0) return [];
+        return [...bill_flow.value].sort((a, b) => {
+            // 支出(2)排在前面，收入(1)排在后面
+            const order = { 2: 1, 1: 2 };
+            return (order[a.value] || 99) - (order[b.value] || 99);
+        });
+    });
+
     const billList = ref([]);
+    const filteredBillTypes = ref([]);  // 联动后的分类选项
+    const typeDisabled = ref(true);      // 分类是否禁用
+    const typePlaceholder = ref('请先选择资金流向');  // 分类占位符
     const userSelect = ref([]);
     const accountSelect = ref([]);
     const now = ref(new Date());
@@ -504,6 +522,38 @@
         };
         initSelect();
         proxy.resetForm("billRef");
+        // 重置分类联动状态
+        typeDisabled.value = true;
+        typePlaceholder.value = '请先选择资金流向';
+        filteredBillTypes.value = [];
+    }
+
+    /**
+     * 资金流向变化联动处理
+     * @param flow 资金流向：1=收入，2=支出（与字典 bill_flow 一致）
+     */
+    async function handleFlowChange(flow) {
+        // 清空已选择的分类
+        form.value.type = undefined;
+
+        if (!flow) {
+            typeDisabled.value = true;
+            typePlaceholder.value = '请先选择资金流向';
+            filteredBillTypes.value = [];
+            return;
+        }
+
+        try {
+            // 调用后端API获取分类列表
+            const response = await getBillTypes(flow);
+            filteredBillTypes.value = response.data || [];
+            typeDisabled.value = false;
+            typePlaceholder.value = '请选择账单分类';
+        } catch (error) {
+            proxy.$modal.msgError('获取分类列表失败');
+            filteredBillTypes.value = [];
+            typeDisabled.value = true;
+        }
     }
 
     /** 搜索按钮操作 */
@@ -533,6 +583,8 @@
         reset();
         open.value = true;
         title.value = "添加账单";
+        // 初始化分类列表（根据默认的资金流向）
+        handleFlowChange(form.value.flow);
     }
 
     /** 修改按钮操作 */
@@ -541,6 +593,10 @@
         const billId = row.billId || ids.value;
         getBill(billId).then(response => {
             form.value = response.data;
+            // 编辑时根据资金流向联动分类选项
+            if (form.value.flow) {
+                handleFlowChange(form.value.flow);
+            }
             open.value = true;
             title.value = "修改账单";
         });

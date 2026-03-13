@@ -50,3 +50,12 @@ export function delBill(billId) {
     method: 'delete'
   })
 }
+
+// 获取账单分类列表
+export function getBillTypes(flow) {
+  return request({
+    url: '/family/bill/types',
+    method: 'get',
+    params: { flow }
+  })
+}
