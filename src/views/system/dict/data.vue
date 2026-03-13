@@ -104,6 +104,8 @@
             </el-table-column>
             <el-table-column label="字典键值" align="center" prop="dictValue"/>
             <el-table-column label="字典排序" align="center" prop="dictSort"/>
+            <el-table-column label="父字典类型" align="center" prop="parentDictType" width="120"/>
+            <el-table-column label="父字典键值" align="center" prop="parentDictValue" width="120"/>
             <el-table-column label="状态" align="center" prop="status">
                 <template #default="scope">
                     <dict-tag :options="sys_normal_disable" :value="scope.row.status"/>
@@ -140,6 +142,16 @@
             <el-form ref="dataRef" :model="form" :rules="rules" label-width="80px">
                 <el-form-item label="字典类型">
                     <el-input v-model="form.dictType" :disabled="true"/>
+                </el-form-item>
+                <el-form-item label="父字典类型" prop="parentDictType">
+                    <el-select v-model="form.parentDictType" placeholder="请选择父字典类型" clearable @change="handleParentDictTypeChange">
+                        <el-option v-for="item in parentTypeOptions" :key="item.dictType" :label="item.dictName" :value="item.dictType" />
+                    </el-select>
+                </el-form-item>
+                <el-form-item label="父字典键值" prop="parentDictValue">
+                    <el-select v-model="form.parentDictValue" placeholder="请先选择父字典类型" clearable :disabled="!form.parentDictType">
+                        <el-option v-for="item in parentValueOptions" :key="item.dictValue" :label="item.dictLabel" :value="item.dictValue" />
+                    </el-select>
                 </el-form-item>
                 <el-form-item label="数据标签" prop="dictLabel">
                     <el-input v-model="form.dictLabel" placeholder="请输入数据标签"/>
@@ -190,7 +202,8 @@
 <script setup name="Data">
     import useDictStore from '@/store/modules/dict'
     import {optionselect as getDictOptionselect, getType} from "@/api/system/dict/type";
-    import {listData, getData, delData, addData, updateData} from "@/api/system/dict/data";
+    import {listData, getData, delData, addData, updateData, listDataByParent} from "@/api/system/dict/data";
+    import {getDicts as getDictData} from "@/api/system/dict/data";
 
     const {proxy} = getCurrentInstance();
     const {sys_normal_disable} = proxy.useDict("sys_normal_disable");
@@ -206,6 +219,8 @@
     const title = ref("");
     const defaultDictType = ref("");
     const typeOptions = ref([]);
+    const parentTypeOptions = ref([]);
+    const parentValueOptions = ref([]);
     const route = useRoute();
     // 数据标签回显样式
     const listClassOptions = ref([
@@ -251,6 +266,31 @@
         });
     }
 
+    /** 查询父字典类型列表 */
+    function getParentTypeList() {
+        getDictOptionselect().then(response => {
+            parentTypeOptions.value = response.data;
+        });
+    }
+
+    /** 父字典类型改变时的联动处理 */
+    function handleParentDictTypeChange(parentDictType) {
+        form.value.parentDictValue = null;
+        parentValueOptions.value = [];
+        if (!parentDictType) return;
+        getDictData(parentDictType).then(response => {
+            parentValueOptions.value = response.data;
+        });
+    }
+
+    /** 加载表单数据时的父字典选项处理 */
+    async function loadParentDictOptions() {
+        if (form.value.parentDictType) {
+            const response = await getDictData(form.value.parentDictType);
+            parentValueOptions.value = response.data;
+        }
+    }
+
     /** 查询字典数据列表 */
     function getList() {
         loading.value = true;
@@ -277,8 +317,11 @@
             listClass: "default",
             dictSort: 0,
             status: "0",
-            remark: undefined
+            remark: undefined,
+            parentDictType: null,
+            parentDictValue: null
         };
+        parentValueOptions.value = [];
         proxy.resetForm("dataRef");
     }
 
@@ -317,14 +360,14 @@
     }
 
     /** 修改按钮操作 */
-    function handleUpdate(row) {
+    async function handleUpdate(row) {
         reset();
         const dictCode = row.dictCode || ids.value;
-        getData(dictCode).then(response => {
-            form.value = response.data;
-            open.value = true;
-            title.value = "修改字典数据";
-        });
+        const response = await getData(dictCode);
+        form.value = response.data;
+        await loadParentDictOptions();
+        open.value = true;
+        title.value = "修改字典数据";
     }
 
     /** 提交按钮 */
@@ -372,4 +415,5 @@
 
     getTypes(route.params && route.params.dictId);
     getTypeList();
+    getParentTypeList();
 </script>

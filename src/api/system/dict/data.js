@@ -50,3 +50,15 @@ export function delData(dictCode) {
         method: 'delete'
     })
 }
+
+// 根据父字典查询字典数据
+export function listDataByParent(dictType, parentDictType, parentDictValue) {
+    return request({
+        url: '/system/dict/data/parent/' + dictType,
+        method: 'get',
+        params: {
+            parentDictType: parentDictType,
+            parentDictValue: parentDictValue
+        }
+    })
+}
